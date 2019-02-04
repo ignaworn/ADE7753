@@ -34,22 +34,13 @@ ADE7753::~ADE7753(void) {
 }
 
 
-/*
- * @brief SPI Pin configuration
- * 
- * @param SPI_MISO, Master In Serial Out Pin
- * @param SPI_MOSI, Master Out Serial In Pin
- * @param SPI_CLK, Clock Pin
- * @param SPI_CS, Chip Select Pin
- * @param spiFreq, SPI Data transfer frequency
- * 
-*/
-void ADE7753::configSPI(gpio_num_t SPI_MISO, gpio_num_t SPI_MOSI, gpio_num_t SPI_CLK, gpio_num_t SPI_CS, int spiFreq) {
+
+void ADE7753::configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq) {
 	// SPI Pin configuration
-	_SPI_MISO = SPI_MISO;
-	_SPI_MOSI = SPI_MOSI;
-	_SPI_CLK = SPI_CLK;
-	_SPI_CS = SPI_CS;
+	_DOUT = DOUT;
+	_DIN = DIN;
+	_SCLK = SCLK;
+	_CS = CS;
     _spiFreq = spiFreq;
 }
 
@@ -69,13 +60,13 @@ void ADE7753::setSPI(void) {
     // SPI BUS configuration structure
     spi_bus_config_t buscfg = {
 		// GPIO pin for Master In Slave Out (=spi_q) signal, or -1 if not used. 
-        .mosi_io_num = _SPI_MOSI,
+        .mosi_io_num = _DIN,
 
 		// GPIO pin for Master Out Slave In (=spi_d) signal, or -1 if not used. 
-        .miso_io_num = _SPI_MISO,
+        .miso_io_num = _DOUT,
 
 		// GPIO pin for Spi CLocK signal, or -1 if not used. 
-        .sclk_io_num = _SPI_CLK,
+        .sclk_io_num = _SCLK,
 
 		// GPIO pin for WP (Write Protect) signal which is used as D2 in 4-bit communication modes, or -1 if not used. 
         .quadwp_io_num = -1,
@@ -124,7 +115,7 @@ void ADE7753::setSPI(void) {
         .input_delay_ns = 0,
         
         // SPI Chip Select pin
-        .spics_io_num = _SPI_CS,
+        .spics_io_num = _CS,
 
         .flags = (uint32_t) 0,
 
@@ -180,14 +171,14 @@ void ADE7753::closeSPI(void) {
 esp_err_t ADE7753::enableChip() {
     // Set Chip Select on LOW to enable the ADE7753
     // TODO: Check if this is correct
-    return gpio_set_level(_SPI_CS, 0);
+    return gpio_set_level(_CS, 0);
 }
 
 
 esp_err_t ADE7753::disableChip() {
     // Set Chip Select on HIGH to disable the ADE7753
     // TODO: Check if this is correct
-    return gpio_set_level(_SPI_CS, 1);
+    return gpio_set_level(_CS, 1);
 }
 
 

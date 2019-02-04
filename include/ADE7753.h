@@ -30,7 +30,7 @@ Defines
 // Register address
 
 //      Name        Address         Length
-#define WAVEFORM    0x01            //  24
+#define WAVEFORM 	0x01            //  24
 #define AENERGY 	0x02            //  24
 #define RAENERGY  	0x03            //  24
 #define LAENERGY 	0x04            //  24
@@ -227,7 +227,18 @@ class ADE7753 {
 
         ADE7753();
         ~ADE7753();
-        void configSPI(gpio_num_t SPI_MISO, gpio_num_t SPI_MOSI, gpio_num_t SPI_CLK, gpio_num_t SPI_CS, int spiFreq);
+
+		/**
+		* @brief SPI Pin configuration
+		* 
+		* @param DOUT, Master In Serial Out (MISO) Pin
+		* @param DIN, Master Out Serial In (MOSI) Pin
+		* @param SCLK, Serial Clock (CLK) Pin
+		* @param CS, Chip Select (CS) Pin
+		* @param spiFreq, SPI Data transfer frequency
+		* 
+		*/
+        void configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq);
         void setSPI(void);
         void closeSPI(void);
 
@@ -376,10 +387,10 @@ class ADE7753 {
 		spi_device_handle_t _SPI;
 
         // SPI default pins 
-        gpio_num_t _SPI_MISO = GPIO_NUM_12;
-        gpio_num_t _SPI_MOSI = GPIO_NUM_13;
-        gpio_num_t _SPI_CLK = GPIO_NUM_14;
-        gpio_num_t _SPI_CS = GPIO_NUM_15;
+        gpio_num_t _DOUT = GPIO_NUM_12;
+        gpio_num_t _DIN = GPIO_NUM_13;
+        gpio_num_t _SCLK = GPIO_NUM_14;
+        gpio_num_t _CS = GPIO_NUM_15;
 		
 		// SPI default frequency (4 MHz is the max)
         int _spiFreq = 4*1000*1000;
