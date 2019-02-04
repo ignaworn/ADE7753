@@ -1,12 +1,12 @@
 # ADE7753
 
-## Work in progress, needs cleanup and testing on other platforms.
-## Now working with esp8266 all types changed since esp is 32 bits.
-### WARNING! If using this library with esp8266 change SPI mode to 3 since arduino core for esp8266 has an error in SPI.cpp or do this:https://github.com/esp8266/Arduino/issues/2416
+Library for ESP-IDF framework, interfaces with ADE7753 single phase energy meter IC.
 
-Interfaces with ADE7753 single phase energy meter IC.
+## Disclaimer
 
-###Reads:
+This is a work in progress, code needs further testing, cleanup and optimization. 
+
+### Reads
 
 *Voltage  
 *Current  
@@ -16,4 +16,3 @@ Interfaces with ADE7753 single phase energy meter IC.
 *Reactive power  
 *Apparent power  
 *IC temperature  
-
