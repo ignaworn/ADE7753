@@ -283,6 +283,9 @@ uint8_t ADE7753::read8(uint8_t reg) {
 
     // Mask the register for a read operation
     reg &= ~(0x01 << 7);
+    
+    // Clear the reserved bit
+    reg &= ~(0x01 << 6);
 
     // Enable ADE7753 communication mode
     enableChip();
@@ -308,6 +311,9 @@ uint16_t ADE7753::read16(uint8_t reg) {
     
     // Mask the register for a read operation
     reg &= ~(0x01 << 7);
+
+    // Clear the reserved bit
+    reg &= ~(0x01 << 6);
 
     // Enable ADE7753 communication mode
     enableChip();
@@ -336,6 +342,9 @@ uint32_t ADE7753::read24(uint8_t reg) {
     
     // Mask the register for a read operation
     reg &= ~(0x01 << 7);
+    
+    // Clear the reserved bit
+    reg &= ~(0x01 << 6);
 
     // Enable ADE7753 communication mode
     enableChip();
@@ -367,6 +376,9 @@ void ADE7753::write8(uint8_t reg, uint8_t data) {
 
     // Mask the register for a write operation
     reg |= (0x01 << 7);
+    
+    // Clear the reserved bit
+    reg &= ~(0x01 << 6);
 
     // Enable ADE7753 communication mode
     enableChip();
@@ -387,6 +399,9 @@ void ADE7753::write16(uint8_t reg, uint16_t data) {
 
     // Mask the register for a write operation
     reg |= (0x01 << 7);
+    
+    // Clear the reserved bit
+    reg &= ~(0x01 << 6);
 
     // Split the data into 2 bytes
     uint8_t dataMSB = (uint8_t) data >> 8;
