@@ -257,8 +257,6 @@ class ADE7753 {
         void setMode(uint16_t m);
         uint16_t getMode();
         void gainSetup(uint8_t integrator, uint8_t scale, uint8_t PGA2, uint8_t PGA1);
-        uint16_t getInterrupts(void);
-        void setInterrupts(uint16_t i);
         uint16_t getStatus(void);
         uint16_t resetStatus(void);
         uint32_t getIRMS(void);
@@ -284,12 +282,50 @@ class ADE7753 {
         uint32_t getWatt(void);
         uint32_t getVar(void);
         uint32_t getVa(void);
-        void setIntPin(uint8_t interruptPin);
-        void setVconst(float vconst);
-        void setIconst(float iconst);
-        void setReadingsNum(uint8_t readingsNum);
-        void setInterruptFunction( void *(function));
-        void doInterrupts(void);
+
+
+		/**
+		 * @brief Set interrupt pin attached to ADE7753's IRQ pin
+		 * 
+		 * @param interruptPin pin number to IRQ
+		 * 
+		 */
+        void setIntPin(gpio_num_t interruptPin);
+
+
+		/**
+		 * @brief Get Interrupt Enable Register from ADE7753
+		 * 
+		 * @return Interrupt enable register values
+		 */
+        uint16_t getInterrupt(void);
+
+
+		/**
+		 * @brief
+		 * 
+		 * @param  
+		 */
+        void setInterrupt(uint16_t reg);
+
+
+		/**
+		 * @brief Configure interrupts and attach a custom function.
+		 * 			no interrupts are enabled if this function is never called.
+		 * 
+		 * @param function name to a `static void IRAM_ATTR` function. No arguments are passed
+		 * 			example: 	
+		 * 					static void IRAM_ATTR gpio_isr_handler() { // stuff }
+		 * 					ADE7753.setInterruptFunction(gpio_isr_handler);
+		 * 
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_NO_MEM No memory to install this service
+		 *     - ESP_ERR_INVALID_STATE ISR service already installed.
+		 *     - ESP_ERR_NOT_FOUND No free interrupt found with the specified flags
+		 * 
+		 */
+        esp_err_t setInterruptFunction( gpio_isr_t func);
 
 
     // Private methods
@@ -398,7 +434,20 @@ class ADE7753 {
         uint8_t _readingsNum = 2;
         float _vconst = 1;
         float _iconst = 1;
-        uint8_t _interruptPin = 0;
+
+        gpio_num_t _interruptPin = GPIO_NUM_1;
+
+		// Interrupt Enable Register cache
+		uint16_t _irqen;
+
+		/**
+		 * @brief Internal interrupts function handler
+		 * 
+		 * @param func pointer to user defined function to 
+		 * 		handle ISR. An uint16_t argument is passed 
+		 * 		containing the interrupt bits from RSTSTATUS 
+		 */
+		void IRAM_ATTR interruptFunction(void* func);
 
 };
 
