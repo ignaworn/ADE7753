@@ -791,11 +791,15 @@ void ADE7753::setReadingsNum(uint8_t readingsNum) {
     _readingsNum = readingsNum;
 }
 
-void ADE7753::setIntPin(gpio_num_t interruptPin) {
+void ADE7753::setInterruptPin(gpio_num_t interruptPin) {
     _interruptPin = interruptPin;
 }
 
-esp_err_t ADE7753::setInterruptFunction( gpio_isr_t func ) {
+void ADE7753::setInterruptFunction(void* func) {
+    _interruptUserFunction = func;
+}
+
+esp_err_t ADE7753::confInterrupt(void ) {
     
     // Error variable
     esp_err_t ret;
@@ -844,7 +848,7 @@ esp_err_t ADE7753::setInterruptFunction( gpio_isr_t func ) {
     ESP_ERROR_CHECK(ret);
 
     // Attach ISR to the GPIO pin
-    ret = gpio_isr_handler_add(_interruptPin, interruptFunction, (void*) func);
+    ret = gpio_isr_handler_add(_interruptPin, interruptFunction, (void*) this );
     /**
      * ESP_OK Success
      * ESP_ERR_INVALID_STATE Wrong state, the ISR service has not been initialized.
@@ -874,19 +878,20 @@ uint16_t ADE7753::getInterrupt(void) {
 }
 
 
-void IRAM_ATTR ADE7753::interruptFunction( void* func ) {
+void IRAM_ATTR ADE7753::interruptFunction( void* arg ) {
 // TODO: Is IRAM_ATTR required? (RAM)
 
+    ADE7753* _this = (ADE7753*) arg;
+
     // Handle the IRQ 
-    uint16_t status = read16(RSTSTATUS); 
+    uint16_t status = _this->read16(RSTSTATUS); 
     
-    // Mask the irq status with the enabled irq's
-    status &= _irqen;
+    // Mask the IRQ status with the enabled IRQ's
+    status &= _this->_irqen;
 
     // Do lib stuff
 
-
     // Call external function
-    //func( status );
+    static_cast<void(*)(uint16_t)> (_this->_interruptUserFunction)(status);
 
 }

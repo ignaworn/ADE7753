@@ -198,7 +198,7 @@ class ADE7753 {
 		 * @param interruptPin pin number to IRQ
 		 * 
 		 */
-        void setIntPin(gpio_num_t interruptPin);
+        void setInterruptPin(gpio_num_t interruptPin);
 
 
 		/**
@@ -216,15 +216,20 @@ class ADE7753 {
 		 */
         void setInterrupt(uint16_t reg);
 
+		/**
+		 * @brief Defines a custom function to handle IRQ from the ADE7753
+		 * 
+		 * @param function pointer to custom function
+		 * 			it receives a uint16_t argument with the IRQ register
+		 * 			masked with the IRQ enabled register.
+		 * 
+		 */
+		void setInterruptFunction(void* func);
+
 
 		/**
-		 * @brief Configure interrupts and attach a custom function.
+		 * @brief Configure interrupts and attach the user-defined IRQ function handler.
 		 * 			no interrupts are enabled if this function is never called.
-		 * 
-		 * @param function name to a `static void IRAM_ATTR` function. No arguments are passed
-		 * 			example: 	
-		 * 					static void IRAM_ATTR gpio_isr_handler() { // stuff }
-		 * 					ADE7753.setInterruptFunction(gpio_isr_handler);
 		 * 
 		 * @return 
 		 *     - ESP_OK Success
@@ -233,7 +238,7 @@ class ADE7753 {
 		 *     - ESP_ERR_NOT_FOUND No free interrupt found with the specified flags
 		 * 
 		 */
-        esp_err_t setInterruptFunction( gpio_isr_t func);
+        esp_err_t confInterrupt(void);
 
 
     // Private methods
@@ -345,6 +350,9 @@ class ADE7753 {
 
         gpio_num_t _interruptPin = GPIO_NUM_1;
 
+		// Pointer to user-defined IRQ function handler.
+		void* _interruptUserFunction;
+
 		// Interrupt Enable Register cache
 		uint16_t _irqen;
 
@@ -355,7 +363,7 @@ class ADE7753 {
 		 * 		handle ISR. An uint16_t argument is passed 
 		 * 		containing the interrupt bits from RSTSTATUS 
 		 */
-		void IRAM_ATTR interruptFunction(void* func);
+		static void IRAM_ATTR interruptFunction(void* arg);
 
 };
 
