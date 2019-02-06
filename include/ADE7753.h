@@ -130,8 +130,8 @@ Defines
 
 class ADE7753 {
 
-    // Public methods
-    public:
+	// Public methods
+	public:
 
 		ADE7753();
 		~ADE7753();
@@ -270,8 +270,8 @@ class ADE7753 {
 		esp_err_t confInterrupt(void);
 
 
-    // Private methods
-    private:
+	// Private methods
+	private:
 
 		/**
 		 * @brief Send a command/data to ADE7753
