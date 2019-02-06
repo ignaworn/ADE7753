@@ -4,7 +4,7 @@ Library for ESP-IDF framework, interfaces with ADE7753 single phase energy meter
 
 ## Disclaimer
 
-This is a work in progress, code needs further testing, cleanup and optimization. 
+This is a work in progress, code needs further testing, cleanup and optimization.
 
 ## Reads
 

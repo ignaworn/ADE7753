@@ -275,6 +275,7 @@ uint8_t ADE7753::receive() {
     */
     ESP_ERROR_CHECK(ret);
     
+    // TODO: Add some check ESP_OK to return data?
     return data;
 }
 
@@ -372,7 +373,10 @@ uint32_t ADE7753::read24(uint8_t reg) {
 }
 
 
-void ADE7753::write8(uint8_t reg, uint8_t data) {
+esp_err_t ADE7753::write8(uint8_t reg, uint8_t data) {
+
+    // Error handler
+    esp_err_t ret;
 
     // Mask the register for a write operation
     reg |= (0x01 << 7);
@@ -381,21 +385,25 @@ void ADE7753::write8(uint8_t reg, uint8_t data) {
     reg &= ~(0x01 << 6);
 
     // Enable ADE7753 communication mode
-    enableChip();
+    ret = enableChip();
 
     // Send the write command
-    send(reg);
+    ret = send(reg);
 
     // Send the data
-    send(data);
+    ret = send(data);
 
     // Disable ADE7753 communication mode 
-    disableChip();
+    ret = disableChip();
 
+    return ret;
 }
 
 
-void ADE7753::write16(uint8_t reg, uint16_t data) {
+esp_err_t ADE7753::write16(uint8_t reg, uint16_t data) {
+
+    // Error handler
+    esp_err_t ret;
 
     // Mask the register for a write operation
     reg |= (0x01 << 7);
@@ -408,19 +416,21 @@ void ADE7753::write16(uint8_t reg, uint16_t data) {
     uint8_t dataLSB = (uint8_t) data & 0x0F;
     
     // Enable ADE7753 communication mode
-    enableChip();
+    ret = enableChip();
 
     // Send the write command
-    send(reg);
+    ret = send(reg);
 
     // Send the MSB data
-    send(dataMSB);
+    ret = send(dataMSB);
 
     // Send the LSB data
-    send(dataLSB);
+    ret = send(dataLSB);
 
     // Disable ADE7753 communication mode 
-    disableChip();
+    ret = disableChip();
+
+    return ret;
 }
 
 
@@ -771,20 +781,32 @@ uint32_t ADE7753::getVa(void) {
     return read24(LVAENERGY);
 }
 
-void ADE7753::setIntPin(uint8_t interruptPin) {
-    _interruptPin = interruptPin;
+esp_err_t ADE7753::setVconst(float vconst) {
+    
+    // Return invalid argument if parameter is equal to 0.
+    if (vconst == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    // Otherwise store the value
+    _vconst = vconst;
+
+    // Return sucess
+    return ESP_OK;
 }
 
-void ADE7753::setVconst(float vconst) { // cant be 0
-    if (vconst) {
-        _vconst = vconst;
+esp_err_t ADE7753::setIconst(float iconst) {
+    
+    // Return invalid argument if parameter is equal to 0.
+    if (iconst == 0) {
+        return ESP_ERR_INVALID_ARG;
     }
-}
+    
+    // Otherwise store the value
+    _iconst = iconst;
 
-void ADE7753::setIconst(float iconst) {
-    if (iconst) {
-        _iconst = iconst;
-    }
+    // Return sucess
+    return ESP_OK;
 }
 
 void ADE7753::setReadingsNum(uint8_t readingsNum) {
@@ -867,7 +889,7 @@ void ADE7753::setInterrupt(uint16_t reg) {
     // Write the Interrupt Enable Register
     write16(IRQEN, reg);
 
-    }
+}
 
 uint16_t ADE7753::getInterrupt(void) {
     // Update IRQ enable cache

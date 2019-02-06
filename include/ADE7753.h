@@ -133,8 +133,8 @@ class ADE7753 {
     // Public methods
     public:
 
-        ADE7753();
-        ~ADE7753();
+		ADE7753();
+		~ADE7753();
 
 		/**
 		* @brief SPI Pin configuration
@@ -146,50 +146,79 @@ class ADE7753 {
 		* @param spiFreq, SPI Data transfer frequency
 		* 
 		*/
-        void configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq);
-        void setSPI(void);
-        void closeSPI(void);
+		void configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq);
+		void setSPI(void);
+		void closeSPI(void);
 
-    //----------------------------------------------------------------------------
-    // Modos y configs
-    //----------------------------------------------------------------------------
-        
+		//----------------------------------------------------------------------------
+		// Modos y configs
+		//----------------------------------------------------------------------------
+
 		/**
 		 * @brief Die Revision Register.
 		 *
-		 * @return: revision number of the silicon.
+		 * @return revision number of the silicon.
 		 * 
 		 */
 		uint8_t getVersion();
 
-        void setMode(uint16_t m);
-        uint16_t getMode();
-        void gainSetup(uint8_t integrator, uint8_t scale, uint8_t PGA2, uint8_t PGA1);
-        uint16_t getStatus(void);
-        uint16_t resetStatus(void);
-        uint32_t getIRMS(void);
-        uint32_t getVRMS(void);
-        float vrms();
-        float irms();
-        uint16_t getPeriod(void);
-        float getFrecuency(void);
-        void setLineCyc(uint16_t d);
-        void setZeroCrossingTimeout(uint16_t d);
-        uint16_t getZeroCrossingTimeout();
-        uint8_t getSagCycles();
-        void setSagCycles(uint8_t d);
-        uint8_t getSagVoltageLevel();
-        void setSagVoltageLevel(uint8_t d);
-        uint8_t getIPeakLevel();
-        void setIPeakLevel(uint8_t d);
-        uint8_t getVPeakLevel();
-        void setVPeakLevel(uint8_t d);
-        uint32_t getIpeakReset(void);
-        uint32_t getVpeakReset(void);
-        uint8_t setPotLine(uint16_t Ciclos);
-        uint32_t getWatt(void);
-        uint32_t getVar(void);
-        uint32_t getVa(void);
+		void setMode(uint16_t m);
+		uint16_t getMode();
+		void gainSetup(uint8_t integrator, uint8_t scale, uint8_t PGA2, uint8_t PGA1);
+		uint16_t getStatus(void);
+		uint16_t resetStatus(void);
+		uint32_t getIRMS(void);
+		uint32_t getVRMS(void);
+		float vrms();
+		float irms();
+		uint16_t getPeriod(void);
+		float getFrecuency(void);
+		void setLineCyc(uint16_t d);
+		void setZeroCrossingTimeout(uint16_t d);
+		uint16_t getZeroCrossingTimeout();
+		uint8_t getSagCycles();
+		void setSagCycles(uint8_t d);
+		uint8_t getSagVoltageLevel();
+		void setSagVoltageLevel(uint8_t d);
+		uint8_t getIPeakLevel();
+		void setIPeakLevel(uint8_t d);
+		uint8_t getVPeakLevel();
+		void setVPeakLevel(uint8_t d);
+		uint32_t getIpeakReset(void);
+		uint32_t getVpeakReset(void);
+		uint8_t setPotLine(uint16_t Ciclos);
+		uint32_t getWatt(void);
+		uint32_t getVar(void);
+
+
+		/**
+		 * @brief 
+		 * 
+		 * @param vconst float number different from zero.
+		 * 
+		 * @return
+		 *         - ESP_OK                on success
+		 *         - ESP_ERR_INVALID_ARG   if parameter is invalid
+		*/
+		esp_err_t setVconst(float vconst);
+
+
+		/**
+		 * @brief 
+		 * 
+		 * @param vconst float number different from zero.
+		 * 
+		 * @return
+		 *         - ESP_OK                on success
+		 *         - ESP_ERR_INVALID_ARG   if parameter is invalid
+		*/   
+		esp_err_t setIconst(float iconst);
+
+
+		void setReadingsNum(uint8_t readingsNum);
+
+
+		uint32_t getVa(void);
 
 
 		/**
@@ -198,7 +227,7 @@ class ADE7753 {
 		 * @param interruptPin pin number to IRQ
 		 * 
 		 */
-        void setInterruptPin(gpio_num_t interruptPin);
+		void setInterruptPin(gpio_num_t interruptPin);
 
 
 		/**
@@ -206,7 +235,7 @@ class ADE7753 {
 		 * 
 		 * @return Interrupt enable register values
 		 */
-        uint16_t getInterrupt(void);
+		uint16_t getInterrupt(void);
 
 
 		/**
@@ -214,7 +243,7 @@ class ADE7753 {
 		 * 
 		 * @param  
 		 */
-        void setInterrupt(uint16_t reg);
+		void setInterrupt(uint16_t reg);
 
 		/**
 		 * @brief Defines a custom function to handle IRQ from the ADE7753
@@ -238,7 +267,7 @@ class ADE7753 {
 		 *     - ESP_ERR_NOT_FOUND No free interrupt found with the specified flags
 		 * 
 		 */
-        esp_err_t confInterrupt(void);
+		esp_err_t confInterrupt(void);
 
 
     // Private methods
@@ -255,7 +284,7 @@ class ADE7753 {
 		 * 
 		*/
 		esp_err_t send(uint8_t data);
-		
+
 		/**
 		 * @brief Receive data from ADE7753
 		 * 
@@ -272,7 +301,7 @@ class ADE7753 {
 		 * @return 8 bit contents of register
 		 *
 		 */
-        uint8_t read8(uint8_t reg);
+		uint8_t read8(uint8_t reg);
 
 		/**
 		 * @brief Read 16 bits from the device at specified register
@@ -282,7 +311,7 @@ class ADE7753 {
 		 * @return 16 bit contents of register
 		 *
 		 */
-        uint16_t read16(uint8_t reg);
+		uint16_t read16(uint8_t reg);
 
 		/**
 		 * @brief Read 24 bits from the device at specified register
@@ -292,7 +321,7 @@ class ADE7753 {
 		 * @return 24 bit contents of register
 		 *
 		 */
-        uint32_t read24(uint8_t reg);
+		uint32_t read24(uint8_t reg);
 
 		/**
 		 * @brief Write 8 bits to the device at specified register
@@ -301,9 +330,12 @@ class ADE7753 {
 		 * 
 		 * @param data char, 8 bits of data to send
 		 *
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
 		 */
-		void write8(uint8_t reg, uint8_t data);
-		
+		esp_err_t write8(uint8_t reg, uint8_t data);
+
 		/**
 		 * @brief Write 16 bits to the device at specified register
 		 * 
@@ -311,44 +343,47 @@ class ADE7753 {
 		 * 
 		 * @param data 16 bits of data to send
 		 *
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
 		 */
-        void write16(uint8_t reg, uint16_t data);
+		esp_err_t write16(uint8_t reg, uint16_t data);
 
 		/** 
 		 * @brief Enable chip by setting LOW on Chip Select Pin
 		 * 
 		 * @return
 		 *     - ESP_OK Success
- 		 *     - ESP_ERR_INVALID_ARG GPIO number error
+		 *     - ESP_ERR_INVALID_ARG GPIO number error
 		 */
-        esp_err_t enableChip();
+		esp_err_t enableChip();
 
 		/**
 		 * @brief Disable chip by setting HIGH Chip Select pin
 		 * 
 		 * @return
 		 *     - ESP_OK Success
- 		 *     - ESP_ERR_INVALID_ARG GPIO number error
+		 *     - ESP_ERR_INVALID_ARG GPIO number error
 		 */
-        esp_err_t disableChip();
+		esp_err_t disableChip();
 
 		// SPI Object Handler
 		spi_device_handle_t _SPI;
 
-        // SPI default pins 
-        gpio_num_t _DOUT = GPIO_NUM_12;
-        gpio_num_t _DIN = GPIO_NUM_13;
-        gpio_num_t _SCLK = GPIO_NUM_14;
-        gpio_num_t _CS = GPIO_NUM_15;
-		
-		// SPI default frequency (4 MHz is the max)
-        int _spiFreq = 4*1000*1000;
+		// SPI default pins 
+		gpio_num_t _DOUT = GPIO_NUM_12;
+		gpio_num_t _DIN = GPIO_NUM_13;
+		gpio_num_t _SCLK = GPIO_NUM_14;
+		gpio_num_t _CS = GPIO_NUM_15;
 
-        uint8_t _readingsNum = 2;
-        float _vconst = 1;
-        float _iconst = 1;
+		// SPI default frequency
+		int _spiFreq = 1*1000*1000;
 
-        gpio_num_t _interruptPin = GPIO_NUM_1;
+		uint8_t _readingsNum = 2;
+		float _vconst = 1;
+		float _iconst = 1;
+
+		gpio_num_t _interruptPin = GPIO_NUM_1;
 
 		// Pointer to user-defined IRQ function handler.
 		void* _interruptUserFunction;
