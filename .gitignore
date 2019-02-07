@@ -16,3 +16,4 @@ platformio.ini
 
 ### Custom ###
 desktop.ini
+src/sdkconfig.h
