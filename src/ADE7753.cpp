@@ -9,13 +9,10 @@ Last update: 02 Feb 2019
 ADE7753 library for esp32 w/ esp-idf framework
 */
 
-#include "stdio.h"
+#include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "ADE7753.h"
-
-// TODO: Cleanup includes
-#include <string.h>
 
 
 /**
