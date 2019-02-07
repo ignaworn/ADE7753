@@ -237,6 +237,19 @@ class ADE7753 {
 		void setInterrupt(uint16_t reg);
 
 
+		/**
+		 * @brief Interrupt function handler
+		 * 
+		 * When an interrupt IRQ is triggered, a call to 
+		 * this method should be made.
+		 * 
+		 * @param func pointer to user defined function to 
+		 * 		handle ISR. An uint16_t argument is passed 
+		 * 		containing the interrupt bits from RSTSTATUS 
+		 */
+		uint16_t IRQHandler(void);
+
+
 	// Private methods
 	private:
 
@@ -349,18 +362,6 @@ class ADE7753 {
 		uint8_t _readingsNum = 2;
 		float _vconst = 1;
 		float _iconst = 1;
-
-		/**
-		 * @brief Interrupt function handler
-		 * 
-		 * When an interrupt IRQ is triggered, a call to 
-		 * this method should be made.
-		 * 
-		 * @param func pointer to user defined function to 
-		 * 		handle ISR. An uint16_t argument is passed 
-		 * 		containing the interrupt bits from RSTSTATUS 
-		 */
-		uint16_t IRQHandler(void);
 
 };
 
