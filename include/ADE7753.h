@@ -222,15 +222,6 @@ class ADE7753 {
 
 
 		/**
-		 * @brief Set interrupt pin attached to ADE7753's IRQ pin
-		 * 
-		 * @param interruptPin pin number to IRQ
-		 * 
-		 */
-		void setInterruptPin(gpio_num_t interruptPin);
-
-
-		/**
 		 * @brief Get Interrupt Enable Register from ADE7753
 		 * 
 		 * @return Interrupt enable register values
@@ -244,30 +235,6 @@ class ADE7753 {
 		 * @param  
 		 */
 		void setInterrupt(uint16_t reg);
-
-		/**
-		 * @brief Defines a custom function to handle IRQ from the ADE7753
-		 * 
-		 * @param function pointer to custom function
-		 * 			it receives a uint16_t argument with the IRQ register
-		 * 			masked with the IRQ enabled register.
-		 * 
-		 */
-		void setInterruptFunction(void* func);
-
-
-		/**
-		 * @brief Configure interrupts and attach the user-defined IRQ function handler.
-		 * 			no interrupts are enabled if this function is never called.
-		 * 
-		 * @return 
-		 *     - ESP_OK Success
-		 *     - ESP_ERR_NO_MEM No memory to install this service
-		 *     - ESP_ERR_INVALID_STATE ISR service already installed.
-		 *     - ESP_ERR_NOT_FOUND No free interrupt found with the specified flags
-		 * 
-		 */
-		esp_err_t confInterrupt(void);
 
 
 	// Private methods
@@ -383,22 +350,17 @@ class ADE7753 {
 		float _vconst = 1;
 		float _iconst = 1;
 
-		gpio_num_t _interruptPin = GPIO_NUM_1;
-
-		// Pointer to user-defined IRQ function handler.
-		void* _interruptUserFunction;
-
-		// Interrupt Enable Register cache
-		uint16_t _irqen;
-
 		/**
-		 * @brief Internal interrupts function handler
+		 * @brief Interrupt function handler
+		 * 
+		 * When an interrupt IRQ is triggered, a call to 
+		 * this method should be made.
 		 * 
 		 * @param func pointer to user defined function to 
 		 * 		handle ISR. An uint16_t argument is passed 
 		 * 		containing the interrupt bits from RSTSTATUS 
 		 */
-		static void IRAM_ATTR interruptFunction(void* arg);
+		uint16_t IRQHandler(void);
 
 };
 

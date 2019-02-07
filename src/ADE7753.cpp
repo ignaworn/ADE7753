@@ -813,107 +813,22 @@ void ADE7753::setReadingsNum(uint8_t readingsNum) {
     _readingsNum = readingsNum;
 }
 
-void ADE7753::setInterruptPin(gpio_num_t interruptPin) {
-    _interruptPin = interruptPin;
-}
-
-void ADE7753::setInterruptFunction(void* func) {
-    _interruptUserFunction = func;
-}
-
-esp_err_t ADE7753::confInterrupt(void ) {
-    
-    // Error variable
-    esp_err_t ret;
-
-    // Set pin as INPUT
-    ret = gpio_set_direction(_interruptPin, GPIO_MODE_INPUT);
-    /**
-     * ESP_OK Success
-     * ESP_ERR_INVALID_ARG GPIO error 
-    */
-    ESP_ERROR_CHECK(ret);
-    
-    // Disable pull-up and pull-down
-    ret =  gpio_set_pull_mode(_interruptPin, GPIO_FLOATING);
-    /**
-     * ESP_OK Success
-     * ESP_ERR_INVALID_ARG : Parameter error  
-    */
-    ESP_ERROR_CHECK(ret);
-
-    // Set interrupt trigger type to falling edge
-    ret = gpio_set_intr_type(_interruptPin, GPIO_INTR_NEGEDGE);
-    /**
-     * ESP_OK Success
-     * ESP_ERR_INVALID_ARG Parameter error 
-    */
-    ESP_ERROR_CHECK(ret);
-    
-    // Enable interrupt 
-    ret = gpio_intr_enable(_interruptPin);
-    /**
-     * ESP_OK Success
-     * ESP_ERR_INVALID_ARG Parameter error 
-    */
-    ESP_ERROR_CHECK(ret);
-
-    // Create ISR service
-    ret = gpio_install_isr_service(ESP_INTR_FLAG_EDGE); // TODO: Check `esp_intr_alloc.h` for correct value
-    /**
-     * ESP_OK Success
-     * ESP_ERR_NO_MEM No memory to install this service
-     * ESP_ERR_INVALID_STATE ISR service already installed.
-     * ESP_ERR_NOT_FOUND No free interrupt found with the specified flags
-     * ESP_ERR_INVALID_ARG GPIO error 
-    */
-    ESP_ERROR_CHECK(ret);
-
-    // Attach ISR to the GPIO pin
-    ret = gpio_isr_handler_add(_interruptPin, interruptFunction, (void*) this );
-    /**
-     * ESP_OK Success
-     * ESP_ERR_INVALID_STATE Wrong state, the ISR service has not been initialized.
-     * ESP_ERR_INVALID_ARG Parameter error 
-     */
-    ESP_ERROR_CHECK(ret);
-
-    // Return ESP_OK
-    return ret;
-}
 
 void ADE7753::setInterrupt(uint16_t reg) {
-    // Save the IRQEN in memory to speed up interrupt source detection
-    _irqen = reg;
 
     // Write the Interrupt Enable Register
     write16(IRQEN, reg);
-
 }
 
 uint16_t ADE7753::getInterrupt(void) {
-    // Update IRQ enable cache
-    _irqen = read16(IRQEN);
 
     // Return the Interrupt Enable Register
-    return _irqen;
+    return read16(IRQEN);
 }
 
 
-void IRAM_ATTR ADE7753::interruptFunction( void* arg ) {
-// TODO: Is IRAM_ATTR required? (RAM)
-
-    ADE7753* _this = (ADE7753*) arg;
-
-    // Handle the IRQ 
-    uint16_t status = _this->read16(RSTSTATUS); 
+uint16_t ADE7753::IRQHandler( void ) {
     
-    // Mask the IRQ status with the enabled IRQ's
-    status &= _this->_irqen;
-
-    // Do lib stuff
-
-    // Call external function
-    static_cast<void(*)(uint16_t)> (_this->_interruptUserFunction)(status);
-
+    // Mask the IRQ status with the IRQ enabled bits
+    return read16(RSTSTATUS) & read16(IRQEN); 
 }
