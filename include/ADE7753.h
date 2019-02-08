@@ -153,7 +153,14 @@ class ADE7753 {
 	// Public methods
 	public:
 
+		/** 
+		 * @brief Class constructor
+		*/
 		ADE7753();
+
+		/** 
+		 * @brief Class destructor
+		*/
 		~ADE7753();
 
 		/**
@@ -317,7 +324,18 @@ class ADE7753 {
 		
 		
 		void setZeroCrossingTimeout(uint16_t d);
+
+
+		/**
+		 * @brief Zero-Crossing Timeout. If no zero crossings are detected
+		 * on Channel 2 within a time period specified by this 12-bit register,
+		 * the interrupt request line (IRQ) is activated
+		 * 
+		 * @return int with the data (12 bits unsigned).
+		 */
 		uint16_t getZeroCrossingTimeout();
+
+
 		uint8_t getSagCycles();
 		void setSagCycles(uint8_t d);
 		uint8_t getSagVoltageLevel();
@@ -328,7 +346,7 @@ class ADE7753 {
 		void setVPeakLevel(uint8_t d);
 		uint32_t getIpeakReset(void);
 		uint32_t getVpeakReset(void);
-		uint8_t setPotLine(uint16_t Ciclos);
+		uint8_t setPotLine(uint16_t cycle);
 		uint32_t getWatt(void);
 		uint32_t getVar(void);
 

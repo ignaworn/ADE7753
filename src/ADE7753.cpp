@@ -15,17 +15,11 @@ ADE7753 library for esp32 w/ esp-idf framework
 #include "ADE7753.h"
 
 
-/**
- * @brief Class constructor 
- */
 ADE7753::ADE7753(void) {
 
 }
 
 
-/** 
- * @brief Class destructor
- */
 ADE7753::~ADE7753(void) {
 
 }
@@ -532,19 +526,15 @@ int8_t ADE7753::getTemp(void) {
  * @return int with the data (16 bits unsigned).
  */
 void ADE7753::setLineCyc(uint16_t d) {
-    write16(LINECYC,d);
+    write16(LINECYC, d);
 }
 
-/**
- * Zero-Crossing Timeout. If no zero crossings are detected
- * on Channel 2 within a time period specified by this 12-bit register,
- * the interrupt request line (IRQ) is activated
- * 
- * @return int with the data (12 bits unsigned).
- */
+
 void ADE7753::setZeroCrossingTimeout(uint16_t d) {
     write16(ZXTOUT,d);
 }
+
+
 uint16_t ADE7753::getZeroCrossingTimeout() {
     return read16(ZXTOUT);
 }
@@ -627,40 +617,40 @@ Setea las condiciones para Line accumulation.
 Luego espera la interrupccion y devuelve 1 cuando ocurre.
 Si no ocurre por mas de 1,5 segundos devuelve un 0.
 **/
-uint8_t ADE7753::setPotLine(uint16_t Ciclos) {
-    int64_t lastupdate = 0;
-    uint8_t t_of = 0;
-    uint16_t m = 0;
-    m = m | DISCF | DISSAG | CYCMODE;
-    setMode(m);
-    resetStatus();
-    setLineCyc(Ciclos);
-    lastupdate = esp_timer_get_time();
-    // wait to terminar de acumular
-    while( !(getStatus() & CYCEND) ) { // wait for the selected interrupt to occur
-        if ((esp_timer_get_time() - lastupdate) > (Ciclos*20)) {
-            t_of = 1;
-            break;
-        }
-    }
-    if(t_of) {
-        return 0;
-    }
-    resetStatus();
-    lastupdate = esp_timer_get_time();
-    // wait to terminar de acumular
-    while(!(getStatus() & CYCEND)) { // wait for the selected interrupt to occur
-		if ((esp_timer_get_time() - lastupdate) > (Ciclos*20)) {
-		    t_of = 1;
-		    break;
-		}
-	}
-	if(t_of) {
-	    return 0;
-	}
-    else{
-	    return 1;
-	}
+uint8_t ADE7753::setPotLine(uint16_t cycle) {
+    // int64_t lastupdate = 0;
+    // uint8_t t_of = 0;
+
+    setMode(  getMode() | DISCF_BIT | DISSAG_BIT | CYCMODE_BIT );
+    setInterrupt( getInterrupt() | CYCEND_BIT ); 
+    setLineCyc(cycle);
+    // getResetStatus(); 
+    // lastupdate = esp_timer_get_time();
+    // // wait to terminar de acumular
+    // while( !(getStatus() & CYCEND_BIT) ) { // wait for the selected interrupt to occur
+    //     if ((esp_timer_get_time() - lastupdate) > (cycle*20)) {
+    //         t_of = 1;
+    //         break;
+    //     }
+    // }
+    // if(t_of) {
+    //     return 0;
+    // }
+    // getResetStatus();
+    // lastupdate = esp_timer_get_time();
+    // // wait to terminar de acumular
+    // while(!(getStatus() & CYCEND_BIT)) { // wait for the selected interrupt to occur
+	// 	if ((esp_timer_get_time() - lastupdate) > (cycle*20)) {
+	// 	    t_of = 1;
+	// 	    break;
+	// 	}
+	// }
+	// if(t_of) {
+	//     return 0;
+	// }
+    // else{
+	//     return 1;
+	// }
 }
 
 /*
