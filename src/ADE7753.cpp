@@ -499,132 +499,29 @@ uint16_t ADE7753::getResetStatus(void) {
     return read16(RSTSTATUS);
 }
 
-/** === getIRMS ===
-* Channel 2 RMS Value (Current Channel).
-* The update rate of the Channel 2 rms measurement is CLKIN/4.
-* To minimize noise, synchronize the reading of the rms register with the zero crossing
-* of the voltage input and take the average of a number of readings.
-* @param none
-* @return long with the data (24 bits unsigned).
-*/
-uint32_t ADE7753::getIRMS(void) {
-	int64_t lastupdate = 0;
-	uint8_t t_of = 0;
-	resetStatus(); // Clear all interrupts
-	lastupdate = esp_timer_get_time();
-	while( !(getStatus() & ZX) ) {   // wait Zero-Crossing
-        if ((esp_timer_get_time() - lastupdate) > 20) {
-            t_of = 1;
-            break;
+
+int32_t ADE7753::getWaveform(void) {
+    return (int32_t) read24(WAVEFORM);
         }
-	}
-	if (t_of) {
-	    return 0;
-	}
-    else{
+
+
+uint32_t ADE7753::getIRMS(void) {
 	    return read24(IRMS);
 	}
-}
 
-/** === getVRMS ===
-* Channel 2 RMS Value (Voltage Channel).
-* The update rate of the Channel 2 rms measurement is CLKIN/4.
-* To minimize noise, synchronize the reading of the rms register with the zero crossing
-* of the voltage input and take the average of a number of readings.
-* @param none
-* @return long with the data (24 bits unsigned).
-*/
+
 uint32_t ADE7753::getVRMS(void) {
-
-	int64_t lastupdate = 0;
-	uint8_t t_of = 0;
-	resetStatus(); // Clear all interrupts
-	lastupdate = esp_timer_get_time();
-
-	while( !(getStatus() & ZX) ) { // wait Zero-Crossing
-        if( (esp_timer_get_time()-lastupdate) > 20 ) {
-            t_of = 1;
-            break;
-        }
-	}
-	if(t_of) {
-		return 0;
-	}
-    else {
 		return read24(VRMS);
 	}
-}
 
-/** === vrms ===
-* Returns the mean of last 100 readings of RMS voltage. Also supress first reading to avoid
-* corrupted data.
-* rms measurement update rate is CLKIN/4.
-* To minimize noise, synchronize the reading of the rms register with the zero crossing
-* of the voltage input and take the average of a number of readings.
-* @param none
-* @return long with RMS voltage value
-*/
-float ADE7753::vrms() {
-	uint8_t i = 0;
-	uint32_t v = 0;
-	if( getVRMS() ) { //Ignore first reading to avoid garbage
-        for( i=0; i < _readingsNum+1; ++i ) {
-            v+=getVRMS();
-        }
-	    return float(v/_readingsNum)/_vconst;
-	}
-    else{
-	    return 0;
-	}
-}
 
-/** === irms ===
-* Returns the mean of last 100 readings of RMS current. Also supress first reading to avoid
-* corrupted data.
-* rms measurement update rate is CLKIN/4.
-* To minimize noise, synchronize the reading of the rms register with the zero crossing
-* of the voltage input and take the average of a number of readings.
-* @param none
-* @return long with RMS current value in hundreds of [mA], ie. 6709=67[mA]
-*/
-float ADE7753::irms() {
-	uint8_t n=0;
-	uint32_t i=0;
-    
-    //Ignore first reading to avoid garbage
-	if( getIRMS() ) { 
-        for(n=0;n<_readingsNum+1;++n) {
-            i+=getIRMS();
-        }
-	    return float(i/_readingsNum)/_iconst;
-	}
-    else {
-	    return 0;
-	}
-}
-
-/**
- * Period of the Channel 2 (Voltage Channel) Input Estimated by Zero-Crossing Processing. The MSB of this register is always zero.
- * @param none
- * @return int with the data (16 bits unsigned).
- */
 uint16_t ADE7753::getPeriod(void) {
-    int64_t lastupdate = 0;
-    uint8_t t_of = 0;
-    resetStatus(); // Clear all interrupts
-    lastupdate = esp_timer_get_time();
-    while( !(getStatus()&ZX) ) {   // wait Zero-Crossing
-        if ( (esp_timer_get_time() - lastupdate) > 20 ) {
-            t_of = 1;
-            break;
-        }
-    }
-    if (t_of) {
-        return 0;
-    }
-    else {
         return read16(PERIOD);
     }
+
+
+int8_t ADE7753::getTemp(void) {
+    return (int8_t) read8(TEMP);
 }
 
 /**
@@ -801,38 +698,6 @@ uint32_t ADE7753::getVar(void) {
  */
 uint32_t ADE7753::getVa(void) {
     return read24(LVAENERGY);
-}
-
-esp_err_t ADE7753::setVconst(float vconst) {
-    
-    // Return invalid argument if parameter is equal to 0.
-    if (vconst == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    
-    // Otherwise store the value
-    _vconst = vconst;
-
-    // Return sucess
-    return ESP_OK;
-}
-
-esp_err_t ADE7753::setIconst(float iconst) {
-    
-    // Return invalid argument if parameter is equal to 0.
-    if (iconst == 0) {
-        return ESP_ERR_INVALID_ARG;
-    }
-    
-    // Otherwise store the value
-    _iconst = iconst;
-
-    // Return sucess
-    return ESP_OK;
-}
-
-void ADE7753::setReadingsNum(uint8_t readingsNum) {
-    _readingsNum = readingsNum;
 }
 
 

@@ -265,13 +265,57 @@ class ADE7753 {
 		 */
 		uint16_t getResetStatus(void);
 
-		uint32_t getIRMS(void);
+
+		/**
+		 * @brief Returns the sampled waveform data from either Channel 1, 
+		 * Channel 2, or the active power signal. The data source and the 
+		 * length of the waveform registers are selected by data Bits 14 
+		 * and 13 in the mode register
+		 * 
+		 * @return 24 bits signed data
+		 */
+		int32_t ADE7753::getWaveform(void);
+
+
+		/**
+		 * @brief Channel 2 RMS Value (Voltage Channel). 
+		 * The update rate of the Channel 2 rms measurement is CLKIN/4.
+		 * 
+		 * @return  24 bits unsigned data
+		 */
 		uint32_t getVRMS(void);
-		float vrms();
-		float irms();
+
+
+		/**
+		 * @brief Channel 1 RMS Value (Current Channel). 
+		 * The update rate of the Channel 1 rms measurement is CLKIN/4.
+		 * 
+		 * @return 24 bits unsigned data
+		 */
+		uint32_t getIRMS(void);
+
+
+		/**
+		 * @brief Period of the Channel 2 (Voltage Channel) Input Estimated 
+		 * by Zero-Crossing Processing. The MSB of this register is always zero.
+		 * 
+		 * @return 16 bit unsigned data
+		 */
 		uint16_t getPeriod(void);
+
+
+		/**
+		 * @brief Returns the result of the last temperature measurement
+		 * 
+		 * @return 8 bit signed data
+		 */
+		int8_t getTemp(void);
+
+
 		float getFrecuency(void);
 		void setLineCyc(uint16_t d);
+		
+		
 		void setZeroCrossingTimeout(uint16_t d);
 		uint16_t getZeroCrossingTimeout();
 		uint8_t getSagCycles();
@@ -287,33 +331,6 @@ class ADE7753 {
 		uint8_t setPotLine(uint16_t Ciclos);
 		uint32_t getWatt(void);
 		uint32_t getVar(void);
-
-
-		/**
-		 * @brief 
-		 * 
-		 * @param vconst float number different from zero.
-		 * 
-		 * @return
-		 *         - ESP_OK                on success
-		 *         - ESP_ERR_INVALID_ARG   if parameter is invalid
-		*/
-		esp_err_t setVconst(float vconst);
-
-
-		/**
-		 * @brief 
-		 * 
-		 * @param vconst float number different from zero.
-		 * 
-		 * @return
-		 *         - ESP_OK                on success
-		 *         - ESP_ERR_INVALID_ARG   if parameter is invalid
-		*/   
-		esp_err_t setIconst(float iconst);
-
-
-		void setReadingsNum(uint8_t readingsNum);
 
 
 		uint32_t getVa(void);
@@ -456,9 +473,6 @@ class ADE7753 {
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
 
-		uint8_t _readingsNum = 2;
-		float _vconst = 1;
-		float _iconst = 1;
 
 };
 
