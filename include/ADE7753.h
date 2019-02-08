@@ -83,52 +83,64 @@ Defines
 
 // MODE REGISTER (0x09)
 
-#define DISHPF      0x01 << 0
-#define DISLPF2     0x01 << 1
-#define DISCF       0x01 << 2
-#define DISSAG      0x01 << 3
-#define ASUSPEND    0x01 << 4
-#define TEMPSEL     0x01 << 5
-#define SWRST       0x01 << 6
-#define CYCMODE     0x01 << 7
-#define DISCH1      0x01 << 8
-#define DISCH2      0x01 << 9
-#define SWAP	    0x01 << 10
-#define DTRT1       0x01 << 11
-#define DTRT0       0x01 << 12
-#define WAVSEL1     0x01 << 13
-#define WAVSEL0     0x01 << 14
-#define POAM        0x01 << 15
+#define DISHPF_BIT      (0x01 << 0)
+#define DISLPF2_BIT     (0x01 << 1)
+#define DISCF_BIT       (0x01 << 2)
+#define DISSAG_BIT      (0x01 << 3)
+#define ASUSPEND_BIT    (0x01 << 4)
+#define TEMPSEL_BIT     (0x01 << 5)
+#define SWRST_BIT       (0x01 << 6)
+#define CYCMODE_BIT     (0x01 << 7)
+#define DISCH1_BIT      (0x01 << 8)
+#define DISCH2_BIT      (0x01 << 9)
+#define SWAP_BIT	    (0x01 << 10)
+#define DTRT_BIT    	(0x01 << 12 | 0x01 << 11)
+#define WAVSEL_BIT  	(0x01 << 14 | 0x01 << 13)
+#define POAM_BIT        (0x01 << 15)
+
+#define DTRT_27_9		(0x00 << 0)
+#define DTRT_14			(0x01 << 0)
+#define DTRT_7			(0x01 << 1)
+#define DTRT_3_5		(0x01 << 1 | 0x01 << 0)
+
+#define WAVESEL_ACTIVE_POWER_SIGNAL ((0x00 << 0 | 0x00 << 1) << 13)
+#define WAVESEL_RESERVED 	((0x00 << 1 | 0x01 << 0) << 13)
+#define WAVESEL_CH1			((0x01 << 1 | 0x00 << 0) << 13)
+#define WAVESEL_CH2 		((0x01 << 1 | 0x01 << 0) << 13)
 
 // INTERRUPT REGISTERS (0x0A - 0x0C)
 
-#define AEHF	    0x01 << 0
-#define SAG		    0x01 << 1
-#define CYCEND	    0x01 << 2
-#define WSMP	    0x01 << 3
-#define ZX		    0x01 << 4
-#define TEMPC	    0x01 << 5
-#define RESET	    0x01 << 6
-#define AEOF	    0x01 << 7
-#define PKV		    0x01 << 8
-#define PKI		    0x01 << 9
-#define VAEHF	    0x01 << 10
-#define VAEOF	    0x01 << 11
-#define ZXTO	    0x01 << 12
-#define PPOS	    0x01 << 13
-#define PNEG	    0x01 << 14
+#define AEHF_BIT	    (0x01 << 0)
+#define SAG_BIT		    (0x01 << 1)
+#define CYCEND_BIT	    (0x01 << 2)
+#define WSMP_BIT	    (0x01 << 3)
+#define ZX_BIT		    (0x01 << 4)
+#define TEMPC_BIT	    (0x01 << 5)
+#define RESET_BIT	    (0x01 << 6)
+#define AEOF_BIT	    (0x01 << 7)
+#define PKV_BIT		    (0x01 << 8)
+#define PKI_BIT		    (0x01 << 9)
+#define VAEHF_BIT	    (0x01 << 10)
+#define VAEOF_BIT	    (0x01 << 11)
+#define ZXTO_BIT	    (0x01 << 12)
+#define PPOS_BIT	    (0x01 << 13)
+#define PNEG_BIT	    (0x01 << 14)
 
 // CH1OS/CH2OS REGISTER (0x0D - 0x0E)
 
-#define INTEGRATOR  0x01 << 7
+#define INTEGRATOR_BIT  (0x01 << 7)
 
 // GAIN REGISTER (0x0F)
 
-#define GAIN_1      0
-#define GAIN_2      1
-#define GAIN_4      2
-#define GAIN_8      3
-#define GAIN_16     4
+#define PGA1_BIT		(0x01 << 2 | 0x01 << 1 | 0x01 << 0)
+#define SCALE_BIT		(0x01 << 4 | 0x01 << 3)
+#define PGA2_BIT		(0x01 << 7 | 0x01 << 6 | 0x01 << 5)
+
+#define GAIN_1      	(0x00 << 0)
+#define GAIN_2      	(0x01 << 0)
+#define GAIN_4      	(0x01 << 1)
+#define GAIN_8      	(0x01 << 1 | 0x01 << 0)
+#define GAIN_16     	(0x01 << 2)
 #define INTEGRATOR_ON   1
 #define INTEGRATOR_OFF  0
 #define FULLSCALESELECT_0_5V    0
@@ -170,11 +182,89 @@ class ADE7753 {
 		 */
 		uint8_t getVersion();
 
-		void setMode(uint16_t m);
-		uint16_t getMode();
-		void gainSetup(uint8_t integrator, uint8_t scale, uint8_t PGA2, uint8_t PGA1);
+
+		/**
+		 * @brief
+		 * 
+		 * @param mode
+		 * 
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
+		 */
+		esp_err_t setMode(uint16_t mode);
+
+
+		/**
+		 * @brief Get MODE register values from ADE7753
+		 * 
+		 * @return data from the register (unsigned 16 bits)
+		 */
+		uint16_t getMode(void);
+
+
+		/**
+		 * @brief
+		 * 
+		 * @param scale
+		 * @param PGA2
+		 * @param PGA1
+		 * 
+		 * @return
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
+		 */
+		esp_err_t setGain(uint8_t scale, uint8_t PGA2, uint8_t PGA1);
+
+
+		/** 
+		 * @brief Get the values of PGA1, PGA2, and SCALE 
+		 * from the GAIN register.
+		 * 
+		 * @return data from GAIN register
+		*/
+		uint8_t getGain(void);
+
+
+		/**
+		 * @brief Activate the digital integrator on Channel 1
+		 * 
+		 * @param integrator 1 for enable and 0 for disable
+		 * 
+		 * @return
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
+		 */
+		esp_err_t setIntegrator(uint8_t integrator);
+
+
+		/** 
+		 * @brief Get interrupt enable bit from CH1OS register
+		 * 
+		 * @return 1 (enabled) or 0 (disabled)
+		*/
+		uint8_t getIntegrator(void);
+
+
+		/**
+		 * @brief Reads the STATUS register
+		 * 
+		 * When an interrupt event occurs in the ADE7753, the 
+		 * corresponding flag in the interrupt status register is set 
+		 * to logic high
+		 * 
+		 * @return 16 bit unsigned data containing the STATUS value 
+		 */
 		uint16_t getStatus(void);
-		uint16_t resetStatus(void);
+
+
+		/**
+		 * @brief Reads and Resets the STATUS register 
+		 * 
+		 * @return 16 bit unsigned data containing the STATUS value 
+		 */
+		uint16_t getResetStatus(void);
+
 		uint32_t getIRMS(void);
 		uint32_t getVRMS(void);
 		float vrms();

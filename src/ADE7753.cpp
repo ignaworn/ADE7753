@@ -435,25 +435,58 @@ uint8_t ADE7753::getVersion(void) {
 }
 
 
-void ADE7753::setMode(uint16_t m) {
-    write16(MODE, m);
+esp_err_t ADE7753::setMode(uint16_t mode) {
+
+    // Check arguments
+    if ( (mode & WAVSEL_BIT) == WAVESEL_RESERVED ) {
+        return ESP_ERR_INVALID_ARG;
 }
+
+    // TODO:  Check if bit 6 is 1
+    //      (SWRST) A data transfer should not take place to the ADE7753 for at least  18 μs after a software reset. 
+    return write16(MODE, mode);
+}
+
+
 uint16_t ADE7753::getMode() {
     return read16(MODE);
 }
 
 
-void ADE7753::gainSetup(uint8_t integrator, uint8_t scale, uint8_t PGA2, uint8_t PGA1) {
+esp_err_t ADE7753::setGain(uint8_t scale = 0, uint8_t PGA2 = 0, uint8_t PGA1 = 0) {
     
+    // Check arguments
+    if ( ( scale > (0x01 << 1)) | (PGA1 > (0x01 << 2)) | (PGA2 > (0x01 << 2)) ) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
     uint8_t pgas = (PGA2 << 5) | (scale << 3) | (PGA1);
     
     // Write GAIN register, format is |3 bits PGA2 gain|2 bits full scale|3 bits PGA1 gain
-    write8(GAIN, pgas);
+    return write8(GAIN, pgas);
     
-    // TODO: Separate integrator config from Gain
-    uint8_t ch1os = (integrator << 7);
+}
     
-    write8(CH1OS, ch1os);
+
+uint8_t ADE7753::getGain(void) {
+    return read8(GAIN);
+}
+
+
+esp_err_t ADE7753::setIntegrator(uint8_t integrator = 1) {
+    
+    // Check arguments
+    if ( integrator > 0x01 ) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // Write bit 7 of CH1OS register
+    return write8(CH1OS, integrator << 7);
+}
+
+
+uint8_t ADE7753::getIntegrator(void) {
+    return (read8(CH1OS) >> 7);
 }
 
 
@@ -462,7 +495,7 @@ uint16_t ADE7753::getStatus(void) {
 }
 
 
-uint16_t ADE7753::resetStatus(void) {
+uint16_t ADE7753::getResetStatus(void) {
     return read16(RSTSTATUS);
 }
 
