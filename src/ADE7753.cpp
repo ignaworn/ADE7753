@@ -31,25 +31,17 @@ ADE7753::~ADE7753(void) {
 }
 
 
+void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN, gpio_num_t SCLK = DEF_SCLK, gpio_num_t CS = DEF_SCLK, int spiFreq = DEF_SPI_FREQ) {
+    // DOCS: https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_master.html
 
-void ADE7753::configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq) {
-	// SPI Pin configuration
+	// gpio_set_direction(_AFECS, GPIO_MODE_OUTPUT); // Configure SPI Chip Select PIN as Output
+    // gpio_set_level(_AEFCS, 1); // Set SPI Chip Select PIN in HIGH to disable ADE7753 by default
+
 	_DOUT = DOUT;
 	_DIN = DIN;
 	_SCLK = SCLK;
 	_CS = CS;
     _spiFreq = spiFreq;
-}
-
-
-/**
- * @brief Start SPI module and configure ADE7753 device
- */
-void ADE7753::setSPI(void) {
-    // DOCS: https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_master.html
-    
-	// gpio_set_direction(_AFECS, GPIO_MODE_OUTPUT); // Configure SPI Chip Select PIN as Output
-    // gpio_set_level(_AEFCS, 1); // Set SPI Chip Select PIN in HIGH to disable ADE7753 by default
 
     // Error handler for esp callbacks
     esp_err_t ret;

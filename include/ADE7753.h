@@ -28,6 +28,12 @@ Defines
 #define CLKIN       3579545         // ADE7753 freq. (4MHz max)
 #define PERIODO     50				// Frecuencia de Red
 
+// Default Pins
+#define DEF_DOUT GPIO_NUM_12
+#define DEF_DIN GPIO_NUM_13
+#define DEF_SCLK GPIO_NUM_14
+#define DEF_CS GPIO_NUM_15
+#define DEF_SPI_FREQ 1E6
 
 // Register address
 
@@ -139,7 +145,7 @@ class ADE7753 {
 		~ADE7753();
 
 		/**
-		* @brief SPI Pin configuration
+		* @brief SPI configuration
 		* 
 		* @param DOUT, Master In Serial Out (MISO) Pin
 		* @param DIN, Master Out Serial In (MOSI) Pin
@@ -149,7 +155,7 @@ class ADE7753 {
 		* 
 		*/
 		void configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq);
-		void setSPI(void);
+
 		void closeSPI(void);
 
 		//----------------------------------------------------------------------------
@@ -353,13 +359,13 @@ class ADE7753 {
 		spi_device_handle_t _SPI;
 
 		// SPI default pins 
-		gpio_num_t _DOUT = GPIO_NUM_12;
-		gpio_num_t _DIN = GPIO_NUM_13;
-		gpio_num_t _SCLK = GPIO_NUM_14;
-		gpio_num_t _CS = GPIO_NUM_15;
+		gpio_num_t _DOUT = DEF_DOUT;
+		gpio_num_t _DIN = DEF_DIN;
+		gpio_num_t _SCLK = DEF_SCLK;
+		gpio_num_t _CS = DEF_CS;
 
 		// SPI default frequency
-		int _spiFreq = 1*1000*1000;
+		int _spiFreq = DEF_SPI_FREQ;
 
 		uint8_t _readingsNum = 2;
 		float _vconst = 1;
