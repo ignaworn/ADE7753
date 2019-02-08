@@ -809,6 +809,7 @@ void ADE7753::setInterrupt(uint16_t reg) {
     write16(IRQEN, reg);
 }
 
+
 uint16_t ADE7753::getInterrupt(void) {
 
     // Return the Interrupt Enable Register
@@ -816,8 +817,8 @@ uint16_t ADE7753::getInterrupt(void) {
 }
 
 
-uint16_t ADE7753::IRQHandler( void ) {
+uint16_t ADE7753::getMaskInterrupt( void ) {
     
     // Mask the IRQ status with the IRQ enabled bits
-    return read16(RSTSTATUS) & read16(IRQEN); 
+    return ( getResetStatus() & getInterrupt() );
 }

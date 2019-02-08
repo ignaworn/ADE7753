@@ -246,16 +246,15 @@ class ADE7753 {
 
 
 		/**
-		 * @brief Interrupt function handler
+		 * @brief  When an interrupt event occurs in the ADE7753, 
+		 * the corresponding flag in the interrupt status register is set to logic high.
 		 * 
-		 * When an interrupt IRQ is triggered, a call to 
-		 * this method should be made.
+		 * When the MCU services the interrupt, it must first carry out a read from the 
+		 * interrupt status register to determine the source of the interrupt.
 		 * 
-		 * @param func pointer to user defined function to 
-		 * 		handle ISR. An uint16_t argument is passed 
-		 * 		containing the interrupt bits from RSTSTATUS 
+		 * @return masked IRQ register
 		 */
-		uint16_t IRQHandler(void);
+		uint16_t getMaskInterrupt(void);
 
 
 	// Private methods
