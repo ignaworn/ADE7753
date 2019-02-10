@@ -281,7 +281,7 @@ class ADE7753 {
 		 * 
 		 * @return 24 bits signed data
 		 */
-		int32_t ADE7753::getWaveform(void);
+		int32_t getWaveform(void);
 
 
 		/**
