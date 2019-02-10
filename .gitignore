@@ -6,7 +6,6 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
-platformio.ini
 
 # End of https://www.gitignore.io/api/platformio
 
