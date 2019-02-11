@@ -145,6 +145,7 @@ void ADE7753::closeSPI(void) {
 }
 
 
+
 /*****************************
  *
  * Private Functions
@@ -646,11 +647,13 @@ uint8_t ADE7753::setPotLine(uint16_t cycle) {
 	// 	}
 	// }
 	// if(t_of) {
+        
 	//     return 0;
 	// }
     // else{
 	//     return 1;
 	// }
+    return 0;
 }
 
 /*
@@ -710,3 +713,58 @@ uint16_t ADE7753::getMaskInterrupt( void ) {
     // Mask the IRQ status with the IRQ enabled bits
     return ( getResetStatus() & getInterrupt() );
 }
+
+/*  TODO-> delete this internal reference when all functions are implemented.
+		
+
+
+
+        		struct waveform {
+			uint8_t cyclesToSample = 5;
+			uint8_t currentCycle = 0;
+			uint8_t isActive = 0;
+			uint16_t currentSample = 0;
+			uint8_t data[MAXWAVEFORMDATA];
+		} _iWaveform, _vWaveform;
+
+*/
+
+uint8_t ADE7753::getVrmsStatus(){
+    return _isVrms;
+}
+
+uint8_t ADE7753::getIrmsStatus(){
+    return _isIrms;
+}
+
+uint8_t ADE7753::getIrmsWaveformStatus(){
+    return _iWaveform.isActive;
+}
+
+uint8_t ADE7753::getVrmsWaveformStatus(){
+    return _vWaveform.isActive;
+}
+
+esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles){
+    if (numberOfCycles > MAXSAMPLECYCLES){
+        numberOfCycles = MAXSAMPLECYCLES;
+    }
+    if (numberOfCycles < 1){
+        numberOfCycles = 1;
+    }
+    if (_iWaveform.isActive || _vWaveform.isActive){
+        return ESP_ERR_INVALID_STATE;
+    }
+    if(channel){ // cuurent sampling mode
+        _iWaveform.isActive = 1;
+        _iWaveform.currentCycle = 0;
+        _iWaveform.currentSample = 0;
+    }else{ // voltage sampling mode
+        _vWaveform.isActive = 1;
+        _vWaveform.currentCycle = 0;
+        _vWaveform.currentSample = 0;
+    }
+    putChipInWaveformMode(channel); //TODO-> Implement this function
+
+}
+

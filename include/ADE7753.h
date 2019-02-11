@@ -23,6 +23,9 @@ Defines
 
 // Class Atributes
 
+#define MAXWAVEFORMDATA 10000
+#define MAXSAMPLECYCLES 10
+
 // Chip Select ADE7753 se le suma luego 8 para compatibilizar con la funcion digitalWrite()
 #define WRITE       0x80			// Valor del addres para la funcion Write. // TODO: No_arduino
 #define CLKIN       3579545         // ADE7753 freq. (4MHz max)
@@ -381,6 +384,27 @@ class ADE7753 {
 		 */
 		uint16_t getMaskInterrupt(void);
 
+		/**
+		 * @brief Sets chip in waveform sampling mode
+		 * 
+		 * @param
+		 * 	   - channel: 0=voltage 1=current
+		 *     - numberOfCycles: ZX sampling number
+		 * 
+		 * @return
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_STATE Waveform already in sample state
+		 */
+
+		esp_err_t sampleWaveform(uint8_t channel, uint8_t numberOfCycles=5);
+
+
+
+		uint8_t getVrmsStatus();
+		uint8_t getIrmsStatus();
+		uint8_t getIrmsWaveformStatus();
+		uint8_t getVrmsWaveformStatus();
+
 
 	// Private methods
 	private:
@@ -487,6 +511,34 @@ class ADE7753 {
 		gpio_num_t _DIN = DEF_DIN;
 		gpio_num_t _SCLK = DEF_SCLK;
 		gpio_num_t _CS = DEF_CS;
+		/**
+		 * 	Device activity flags
+		 * 
+		 * isVrms: active vrms measure.
+		 * isIrms: active irms measure.
+		 * waveform._isActive: active waveform sampling.
+		 * 
+		 * 	Device error status flags TODO-> Check is these are necessary.
+		 * 
+		 * isZXTimeout: ZX timeout has happened.
+		 * isSag: Undervoltage.
+		 * isVpeak: Voltage peak detected.
+		 * isIpeak: Current peak detected.
+		 *	
+		 **/
+
+		uint8_t _isVrms = 0;
+		uint8_t _isIrms = 0;
+
+		struct waveform {
+			uint8_t cyclesToSample = 5;
+			uint8_t currentCycle = 0;
+			uint8_t isActive = 0;
+			uint16_t currentSample = 0;
+			uint8_t data[MAXWAVEFORMDATA];
+			uint8_t dataAvailable = 0;
+		} _iWaveform, _vWaveform;
+
 
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
