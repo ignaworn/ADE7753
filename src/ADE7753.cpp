@@ -40,6 +40,16 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN, gp
     // Error handler for esp callbacks
     esp_err_t ret;
     
+    // Configure ChipSelect pin
+    gpio_config_t gpio_CS = {
+        .pin_bit_mask = (1ULL << _CS),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK( gpio_config(&gpio_CS) );
+    
     // SPI BUS configuration structure
     spi_bus_config_t buscfg = {
 		// GPIO pin for Master In Slave Out (=spi_q) signal, or -1 if not used. 
@@ -98,7 +108,7 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN, gp
         .input_delay_ns = 0,
         
         // SPI Chip Select pin
-        .spics_io_num = _CS,
+        .spics_io_num = -1,
 
         .flags = (uint32_t) 0,
 
