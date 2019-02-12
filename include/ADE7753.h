@@ -103,8 +103,8 @@ Defines
 
 #define DTRT_27_9		(0x00 << 11)
 #define DTRT_14			(0x01 << 11)
-#define DTRT_7			(0x10 << 11)
-#define DTRT_3_5		(0x11 << 11)
+#define DTRT_7			(0x02 << 11)
+#define DTRT_3_5		(0x03 << 11)
 
 #define WAVESEL_ACTIVE_POWER_SIGNAL ((0x00 << 0 | 0x00 << 1) << 13)
 #define WAVESEL_RESERVED 	((0x00 << 1 | 0x01 << 0) << 13)
@@ -196,7 +196,7 @@ class ADE7753 {
 		/**
 		 * @brief
 		 * 
-		 * @param mode
+		 * @param Bit on Mode register.
 		 * 
 		 * @return 
 		 *     - ESP_OK Success
@@ -204,6 +204,17 @@ class ADE7753 {
 		 */
 		esp_err_t setMode(uint16_t mode);
 
+
+		/**
+		 * @brief
+		 * 
+		 * @param Bit on Mode register.
+		 * 
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
+		 */
+		esp_err_t clearMode(uint16_t mode);
 
 		/**
 		 * @brief Get MODE register values from ADE7753

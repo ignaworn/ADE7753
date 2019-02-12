@@ -431,15 +431,86 @@ uint8_t ADE7753::getVersion(void) {
 
 
 esp_err_t ADE7753::setMode(uint16_t mode) {
-
     // Check arguments
     if ( (mode & WAVSEL_BIT) == WAVESEL_RESERVED ) {
         return ESP_ERR_INVALID_ARG;
-}
+    }
+    // TODO-> check next lines make sense
+    uint16_t tempMode = 0xFFFF & mode; // all ones but zeroes on mode zero bits.
+    tempMode &= getMode(); // put zero on mode zero bits.
+    tempMode |= mode; //now mode zero bits will be zero always and ones one.
+
+    /**
+     * DISHPF_BIT      (0x01 << 0)
+     * DISLPF2_BIT     (0x01 << 1)
+     * DISCF_BIT       (0x01 << 2)
+     * DISSAG_BIT      (0x01 << 3)
+     * ASUSPEND_BIT    (0x01 << 4)
+     * TEMPSEL_BIT     (0x01 << 5)
+     * SWRST_BIT       (0x01 << 6)
+     * CYCMODE_BIT     (0x01 << 7)
+     * DISCH1_BIT      (0x01 << 8)
+     * DISCH2_BIT      (0x01 << 9)
+     * SWAP_BIT	       (0x01 << 10)
+     * DTRT_BIT    	   (0x01 << 12 | 0x01 << 11)
+     * WAVSEL_BIT  	   (0x01 << 14 | 0x01 << 13)
+     * POAM_BIT        (0x01 << 15)
+
+     * DTRT_27_9	   (0x00 << 11)
+     * DTRT_14		   (0x01 << 11)
+     * DTRT_7		   (0x02 << 11)
+     * DTRT_3_5		   (0x03 << 11)
+
+     * WAVESEL_ACTIVE_POWER_SIGNAL  ((0x00 << 0 | 0x00 << 1) << 13)
+     * WAVESEL_RESERVED 	        ((0x00 << 1 | 0x01 << 0) << 13)
+     * WAVESEL_CH1	        		((0x01 << 1 | 0x00 << 0) << 13)
+     * WAVESEL_CH2 	            	((0x01 << 1 | 0x01 << 0) << 13)
+    **/
 
     // TODO:  Check if bit 6 is 1
     //      (SWRST) A data transfer should not take place to the ADE7753 for at least  18 μs after a software reset. 
-    return write16(MODE, mode);
+    return write16(MODE, tempMode);
+}
+
+esp_err_t ADE7753::clearMode(uint16_t mode) {
+    // Check arguments
+    if ( (mode & WAVSEL_BIT) == WAVESEL_RESERVED ) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    // TODO-> check next lines make sense
+    uint16_t tempMode = 0xFFFF & mode; // all ones but zeroes on mode zero bits.
+    tempMode &= getMode(); // put zero on mode zero bits.
+    tempMode |= mode; //now mode zero bits will be zero always and ones one.
+    /**
+     * DISHPF_BIT      (0x01 << 0)
+     * DISLPF2_BIT     (0x01 << 1)
+     * DISCF_BIT       (0x01 << 2)
+     * DISSAG_BIT      (0x01 << 3)
+     * ASUSPEND_BIT    (0x01 << 4)
+     * TEMPSEL_BIT     (0x01 << 5)
+     * SWRST_BIT       (0x01 << 6)
+     * CYCMODE_BIT     (0x01 << 7)
+     * DISCH1_BIT      (0x01 << 8)
+     * DISCH2_BIT      (0x01 << 9)
+     * SWAP_BIT	       (0x01 << 10)
+     * DTRT_BIT    	   (0x01 << 12 | 0x01 << 11)
+     * WAVSEL_BIT  	   (0x01 << 14 | 0x01 << 13)
+     * POAM_BIT        (0x01 << 15)
+
+     * DTRT_27_9	   (0x00 << 11)
+     * DTRT_14		   (0x01 << 11)
+     * DTRT_7		   (0x02 << 11)
+     * DTRT_3_5		   (0x03 << 11)
+
+     * WAVESEL_ACTIVE_POWER_SIGNAL  ((0x00 << 0 | 0x00 << 1) << 13)
+     * WAVESEL_RESERVED 	        ((0x00 << 1 | 0x01 << 0) << 13)
+     * WAVESEL_CH1	        		((0x01 << 1 | 0x00 << 0) << 13)
+     * WAVESEL_CH2 	            	((0x01 << 1 | 0x01 << 0) << 13)
+    **/
+
+    // TODO:  Check if bit 6 is 1
+    //      (SWRST) A data transfer should not take place to the ADE7753 for at least  18 μs after a software reset. 
+    return write16(MODE,getMode() & !tempMode);
 }
 
 
@@ -449,7 +520,6 @@ uint16_t ADE7753::getMode() {
 
 
 esp_err_t ADE7753::setGain(uint8_t scale = 0, uint8_t PGA2 = 0, uint8_t PGA1 = 0) {
-    
     // Check arguments
     if ( ( scale > (0x01 << 1)) | (PGA1 > (0x01 << 2)) | (PGA2 > (0x01 << 2)) ) {
         return ESP_ERR_INVALID_ARG;
