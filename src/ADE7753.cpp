@@ -695,10 +695,51 @@ uint32_t ADE7753::getVa(void) {
 
 
 void ADE7753::setInterrupt(uint16_t reg) {
+    /* Posible reg value:
+    AEHF_BIT	    (0x01 << 0)
+    SAG_BIT		    (0x01 << 1)
+    CYCEND_BIT	    (0x01 << 2)
+    WSMP_BIT	    (0x01 << 3)
+    ZX_BIT		    (0x01 << 4)
+    TEMPC_BIT	    (0x01 << 5)
+    RESET_BIT	    (0x01 << 6)
+    AEOF_BIT	    (0x01 << 7)
+    PKV_BIT		    (0x01 << 8)
+    PKI_BIT		    (0x01 << 9)
+    VAEHF_BIT	    (0x01 << 10)
+    VAEOF_BIT	    (0x01 << 11)
+    ZXTO_BIT	    (0x01 << 12)
+    PPOS_BIT	    (0x01 << 13)
+    PNEG_BIT	    (0x01 << 14)
+    */
 
     // Write the Interrupt Enable Register
-    write16(IRQEN, reg);
+    write16(IRQEN,getInterrupt() | reg);
 }
+
+void ADE7753::clearInterrupt(uint16_t reg) {
+    /* Posible reg value:
+    AEHF_BIT	    (0x01 << 0)
+    SAG_BIT		    (0x01 << 1)
+    CYCEND_BIT	    (0x01 << 2)
+    WSMP_BIT	    (0x01 << 3)
+    ZX_BIT		    (0x01 << 4)
+    TEMPC_BIT	    (0x01 << 5)
+    RESET_BIT	    (0x01 << 6)
+    AEOF_BIT	    (0x01 << 7)
+    PKV_BIT		    (0x01 << 8)
+    PKI_BIT		    (0x01 << 9)
+    VAEHF_BIT	    (0x01 << 10)
+    VAEOF_BIT	    (0x01 << 11)
+    ZXTO_BIT	    (0x01 << 12)
+    PPOS_BIT	    (0x01 << 13)
+    PNEG_BIT	    (0x01 << 14)
+    */
+
+    // Write the Interrupt Enable Register
+    write16(IRQEN,getInterrupt() & !reg);
+}
+
 
 
 uint16_t ADE7753::getInterrupt(void) {
@@ -713,21 +754,6 @@ uint16_t ADE7753::getMaskInterrupt( void ) {
     // Mask the IRQ status with the IRQ enabled bits
     return ( getResetStatus() & getInterrupt() );
 }
-
-/*  TODO-> delete this internal reference when all functions are implemented.
-		
-
-
-
-        		struct waveform {
-			uint8_t cyclesToSample = 5;
-			uint8_t currentCycle = 0;
-			uint8_t isActive = 0;
-			uint16_t currentSample = 0;
-			uint8_t data[MAXWAVEFORMDATA];
-		} _iWaveform, _vWaveform;
-
-*/
 
 uint8_t ADE7753::getVrmsStatus(){
     return _isVrms;
@@ -745,26 +771,50 @@ uint8_t ADE7753::getVrmsWaveformStatus(){
     return _vWaveform.isActive;
 }
 
-esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles){
+esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8_t sampleRate){
     if (numberOfCycles > MAXSAMPLECYCLES){
         numberOfCycles = MAXSAMPLECYCLES;
     }
     if (numberOfCycles < 1){
         numberOfCycles = 1;
     }
-    if (_iWaveform.isActive || _vWaveform.isActive){
+    if (_iWaveform.isActive | _vWaveform.isActive){
         return ESP_ERR_INVALID_STATE;
     }
-    if(channel){ // cuurent sampling mode
+    uint16_t tempMode = getMode() & 0x87FF; // first we mask out previous waveselect value.
+    if(channel){ // cuurent sampling mode ch1
         _iWaveform.isActive = 1;
         _iWaveform.currentCycle = 0;
         _iWaveform.currentSample = 0;
-    }else{ // voltage sampling mode
+        tempMode|=WAVESEL_CH1;
+    }else{ // voltage sampling mode ch2
         _vWaveform.isActive = 1;
         _vWaveform.currentCycle = 0;
         _vWaveform.currentSample = 0;
+        tempMode|=WAVESEL_CH2;
     }
-    putChipInWaveformMode(channel); //TODO-> Implement this function
-
+    switch(sampleRate){
+        case 0:         tempMode|=DTRT_3_5;
+                        break;
+        case 1:         tempMode|=DTRT_7;
+                        break;
+        case 2:         tempMode|=DTRT_14;
+                        break;
+        case 3:         tempMode|=DTRT_27_9;
+                        break;
+        default:        tempMode|=DTRT_27_9;
+                        break;
+    }
+    setMode(tempMode);
+    setInterrupt(WSMP_BIT);
 }
 
+void ADE7753::waveformSampleAvailable(){
+    if (_iWaveform.isActive){
+        _iWaveform.data[_iWaveform.currentSample] = getWaveform();
+        _iWaveform.currentSample++;
+    }else{
+        _vWaveform.data[_vWaveform.currentSample] = getWaveform();
+        _vWaveform.currentSample++;
+    }
+}

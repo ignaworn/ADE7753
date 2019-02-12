@@ -36,7 +36,7 @@ Defines
 #define DEF_DIN GPIO_NUM_13
 #define DEF_SCLK GPIO_NUM_14
 #define DEF_CS GPIO_NUM_15
-#define DEF_SPI_FREQ 1E6
+#define DEF_SPI_FREQ 8E6
 
 // Register address
 
@@ -101,10 +101,10 @@ Defines
 #define WAVSEL_BIT  	(0x01 << 14 | 0x01 << 13)
 #define POAM_BIT        (0x01 << 15)
 
-#define DTRT_27_9		(0x00 << 0)
-#define DTRT_14			(0x01 << 0)
-#define DTRT_7			(0x01 << 1)
-#define DTRT_3_5		(0x01 << 1 | 0x01 << 0)
+#define DTRT_27_9		(0x00 << 11)
+#define DTRT_14			(0x01 << 11)
+#define DTRT_7			(0x10 << 11)
+#define DTRT_3_5		(0x11 << 11)
 
 #define WAVESEL_ACTIVE_POWER_SIGNAL ((0x00 << 0 | 0x00 << 1) << 13)
 #define WAVESEL_RESERVED 	((0x00 << 1 | 0x01 << 0) << 13)
@@ -374,6 +374,14 @@ class ADE7753 {
 
 
 		/**
+		 * @brief
+		 * 
+		 * @param  
+		 */
+		void clearInterrupt(uint16_t reg);
+
+
+		/**
 		 * @brief  When an interrupt event occurs in the ADE7753, 
 		 * the corresponding flag in the interrupt status register is set to logic high.
 		 * 
@@ -396,9 +404,9 @@ class ADE7753 {
 		 *     - ESP_ERR_INVALID_STATE Waveform already in sample state
 		 */
 
-		esp_err_t sampleWaveform(uint8_t channel, uint8_t numberOfCycles=5);
+		esp_err_t sampleWaveform(uint8_t channel, uint8_t numberOfCycles=5, uint8_t sampleRate = 0);
 
-
+		void waveformSampleAvailable();
 
 		uint8_t getVrmsStatus();
 		uint8_t getIrmsStatus();
@@ -535,7 +543,7 @@ class ADE7753 {
 			uint8_t currentCycle = 0;
 			uint8_t isActive = 0;
 			uint16_t currentSample = 0;
-			uint8_t data[MAXWAVEFORMDATA];
+			uint32_t data[MAXWAVEFORMDATA];
 			uint8_t dataAvailable = 0;
 		} _iWaveform, _vWaveform;
 
