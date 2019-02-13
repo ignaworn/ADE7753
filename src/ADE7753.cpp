@@ -794,7 +794,7 @@ void ADE7753::setInterrupt(uint16_t reg) {
     */
 
     // Write the Interrupt Enable Register
-    write16(IRQEN,getInterrupt() | reg);
+    write16(IRQEN, getInterrupt() | reg);
 }
 
 void ADE7753::clearInterrupt(uint16_t reg) {
