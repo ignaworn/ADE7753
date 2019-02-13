@@ -450,6 +450,7 @@ esp_err_t ADE7753::setMode(uint16_t mode) {
     tempMode &= getMode(); // put zero on mode zero bits.
     tempMode |= mode; //now mode zero bits will be zero always and ones one.
 
+    
     /**
      * DISHPF_BIT      (0x01 << 0)
      * DISLPF2_BIT     (0x01 << 1)
@@ -843,22 +844,22 @@ uint8_t ADE7753::getIrmsStatus(){
     return _isIrms;
 }
 
-uint8_t ADE7753::getIrmsWaveformStatus(){
+uint8_t ADE7753::getIrmsWaveformStatus() {
     return _iWaveform.isActive;
 }
 
-uint8_t ADE7753::getVrmsWaveformStatus(){
+uint8_t ADE7753::getVrmsWaveformStatus() {
     return _vWaveform.isActive;
 }
 
-esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8_t sampleRate){
+esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8_t sampleRate) {
     if (numberOfCycles > MAXSAMPLECYCLES){
         numberOfCycles = MAXSAMPLECYCLES;
     }
     if (numberOfCycles < 1){
         numberOfCycles = 1;
     }
-    if (_iWaveform.isActive | _vWaveform.isActive){
+    if (_iWaveform.isActive | _vWaveform.isActive) {
         return ESP_ERR_INVALID_STATE;
     }
     uint16_t tempMode = getMode() & 0x87FF; // first we mask out previous waveselect value.
@@ -889,7 +890,7 @@ esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8
     setInterrupt(WSMP_BIT);
 }
 
-void ADE7753::waveformSampleAvailable(){
+void ADE7753::waveformSampleAvailable() {
     if (_iWaveform.isActive){
         _iWaveform.data[_iWaveform.currentSample] = getWaveform();
         _iWaveform.currentSample++;
