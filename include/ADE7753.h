@@ -151,6 +151,54 @@ Defines
 #define FULLSCALESELECT_0_125V  2
 
 
+class WaveformSample { // TODO-> comment.
+
+	public:
+
+		/** 
+		 * @brief Class constructor
+		*/
+		WaveformSample(uint8_t rate, uint8_t cyclesToSample);
+
+		/** 
+		 * @brief Class destructor
+		*/
+		~WaveformSample();
+
+		uint16_t getCurrentSample();
+
+		uint8_t getDataAvailable();
+
+		void setDataAvailable();
+
+		uint8_t getCyclesToSample();
+
+		void setCyclesToSample(uint8_t Cycles);
+
+		uint8_t getCurrentCycle();
+
+		void setCurrentCycle(uint8_t Cycle);
+
+		uint32_t *getData();
+
+		void putData( uint32_t Data);
+
+	private:
+
+		uint8_t _dataAvailable = 0;
+		uint8_t _cyclesToSample;
+		uint8_t _currentCycle = 0;
+		uint16_t _currentSample = 0;
+		uint16_t _totalSamples;
+		uint32_t *_dataPtr = NULL;
+
+
+
+	friend class ADE7753;
+};
+
+
+
 class ADE7753 {
 
 	// Public methods
@@ -417,13 +465,12 @@ class ADE7753 {
 
 		esp_err_t sampleWaveform(uint8_t channel, uint8_t numberOfCycles=5, uint8_t sampleRate = 0);
 
-		void waveformSampleAvailable();
+		uint8_t waveformSampleAvailable();
+		void stopSampling();
+		void ZXISR();
 
 		uint8_t getVrmsStatus();
 		uint8_t getIrmsStatus();
-		uint8_t getIrmsWaveformStatus();
-		uint8_t getVrmsWaveformStatus();
-
 
 	// Private methods
 	private:
@@ -535,7 +582,7 @@ class ADE7753 {
 		 * 
 		 * isVrms: active vrms measure.
 		 * isIrms: active irms measure.
-		 * waveform._isActive: active waveform sampling.
+		 * _myWaveformPtr!=NULL~: active waveform sampling.
 		 * 
 		 * 	Device error status flags TODO-> Check is these are necessary.
 		 * 
@@ -548,19 +595,12 @@ class ADE7753 {
 
 		uint8_t _isVrms = 0;
 		uint8_t _isIrms = 0;
-
-		struct waveform {
-			uint8_t cyclesToSample = 5;
-			uint8_t currentCycle = 0;
-			uint8_t isActive = 0;
-			uint16_t currentSample = 0;
-			uint32_t data[MAXWAVEFORMDATA];
-			uint8_t dataAvailable = 0;
-		} _iWaveform, _vWaveform;
-
+		WaveformSample *_myWaveformPtr;
 
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
+
+
 
 
 };
