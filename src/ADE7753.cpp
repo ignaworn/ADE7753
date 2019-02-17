@@ -77,8 +77,8 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN, gp
         .intr_flags = 0,
     };
 
-    // Initialize the SPI bus using HSPI host and use DMA channel 1
-    ret = spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+    // Initialize the SPI bus using HSPI host without DMA.
+    ret = spi_bus_initialize(HSPI_HOST, &buscfg, 0);
 	/**
 	 * ESP_ERR_INVALID_ARG if configuration is invalid
 	 * ESP_ERR_INVALID_STATE if host already is in use
