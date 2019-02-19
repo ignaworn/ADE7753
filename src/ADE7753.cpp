@@ -49,6 +49,7 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN, gp
         .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK( gpio_config(&gpio_CS) );
+    disableChip();
     
     // SPI BUS configuration structure
     spi_bus_config_t buscfg = {
