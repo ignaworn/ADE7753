@@ -98,7 +98,7 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN, gp
 
         // SPI mode (0-3)
         // Clock polarity and phase. See https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Clock_polarity_and_phase
-        .mode = 2,
+        .mode = 1,
 
         .duty_cycle_pos = 0,
         .cs_ena_pretrans = 0,
