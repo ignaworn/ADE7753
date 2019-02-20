@@ -169,9 +169,14 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         .dummy_bits = 0,
 
         // SPI mode (0-3)
+        // Clock polarity and phase. See https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Clock_polarity_and_phase
         .mode = 1,
 
         .duty_cycle_pos = 0,
+        .cs_ena_pretrans = 0,
+        .cs_ena_posttrans = 0, // TODO: Fix this value
+
+		// Clock speed, divisors of 80MHz, in Hz. See ``SPI_MASTER_FREQ_*``.
         .clock_speed_hz = _spiFreq,
         .input_delay_ns = 0,
 
@@ -186,7 +191,6 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         // Callback to be called before and after a transmission is made.
         .pre_cb = 0,
         .post_cb = 0,
-
     };
 
     // Attach the LCD to the SPI bus
@@ -776,11 +780,13 @@ esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8
     }
     setMode(tempMode);
     setInterrupt(WSMP_BIT);
+
+    return ESP_OK;
 }
 
 uint8_t ADE7753::waveformSampleAvailable() {
 
-    if (_myWaveformPtr=NULL) { return 0;}
+    if (_myWaveformPtr == NULL) { return 0;}
     
     _myWaveformPtr->putData(read24(WAVEFORM));
     return 1;
