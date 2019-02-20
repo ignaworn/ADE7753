@@ -421,9 +421,7 @@ esp_err_t ADE7753::setMode(uint16_t mode) {
         return ESP_ERR_INVALID_ARG;
     }
     // TODO-> check next lines make sense
-    uint16_t tempMode =  0xFFFF & mode;      // all ones but zeroes on mode zero bits.
-    tempMode &= getMode();  // put zero on mode zero bits.
-    tempMode |= mode;  // now mode zero bits will be zero always and ones one.
+    uint16_t tempMode = getMode() | mode;
 
     /**
      * DISHPF_BIT      (0x01 << 0)
