@@ -9,6 +9,7 @@ Last update: 02 Feb 2019
 ADE7753 library for esp32 w/ esp-idf framework
 */
 
+#include "string.h"
 #include "ADE7753.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -116,8 +117,9 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
-    ESP_ERROR_CHECK(gpio_config(&gpio_CS));
-
+    ESP_ERROR_CHECK( gpio_config(&gpio_CS) );
+    disableChip();
+    
     // SPI BUS configuration structure
     spi_bus_config_t buscfg = {
         // GPIO pin for Master In Slave Out (=spi_q) signal, or -1 if not used.
@@ -137,8 +139,8 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         // communication modes, or -1 if not used.
         .quadhd_io_num = -1,
 
-        // Maximum transfer size, in bytes. Defaults to 4094 if 0.
-        .max_transfer_sz = 0,  // TODO: Calculate proper value.
+		// Maximum transfer size, in bytes. Defaults to 4094 if 0. 
+        .max_transfer_sz = 4, // TODO: Calculate proper value.
 
         // Abilities of bus to be checked by the driver. Or-ed value of
         // ``SPICOMMON_BUSFLAG_*`` flags.
@@ -148,14 +150,14 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         .intr_flags = 0,
     };
 
-    // Initialize the SPI bus using HSPI host and use DMA channel 1
-    ret = spi_bus_initialize(HSPI_HOST, &buscfg, 1);
-    /**
-     * ESP_ERR_INVALID_ARG if configuration is invalid
-     * ESP_ERR_INVALID_STATE if host already is in use
-     * ESP_ERR_NO_MEM if out of memory
-     * ESP_OK on success
-     */
+    // Initialize the SPI bus using HSPI host without DMA.
+    ret = spi_bus_initialize(HSPI_HOST, &buscfg, 0);
+	/**
+	 * ESP_ERR_INVALID_ARG if configuration is invalid
+	 * ESP_ERR_INVALID_STATE if host already is in use
+	 * ESP_ERR_NO_MEM if out of memory
+	 * ESP_OK on success 
+	 */
     ESP_ERROR_CHECK(ret);
 
     // SPI Device Interface configuration structure.
@@ -167,28 +169,20 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         .dummy_bits = 0,
 
         // SPI mode (0-3)
-        // Clock polarity and phase. See
-        // https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Clock_polarity_and_phase
-        .mode = 2,
+        .mode = 1,
 
         .duty_cycle_pos = 0,
-        .cs_ena_pretrans = 0,
-        .cs_ena_posttrans = 0,  // TODO: Fix this value
-
-        // Clock speed, divisors of 80MHz, in Hz. See ``SPI_MASTER_FREQ_*``.
         .clock_speed_hz = _spiFreq,
         .input_delay_ns = 0,
 
         // SPI Chip Select pin
         .spics_io_num = -1,
 
-        .flags = (uint32_t)0,
+        .flags = SPI_DEVICE_HALFDUPLEX | SPI_DEVICE_NO_DUMMY,
 
-        // Transaction queue size. This sets how many transactions can be 'in
-        // the air' (queued using spi_device_queue_trans but not yet finished
-        // using spi_device_get_trans_result) at the same time
-        .queue_size = 7,  // TODO: Check this value
-
+        // Transaction queue size. This sets how many transactions can be 'in the air' (queued using spi_device_queue_trans but not yet finished using spi_device_get_trans_result) at the same time
+        .queue_size = 2, // TODO: Check this value
+        
         // Callback to be called before and after a transmission is made.
         .pre_cb = 0,
         .post_cb = 0,
@@ -245,109 +239,30 @@ esp_err_t ADE7753::disableChip() {
     return gpio_set_level(_CS, 1);
 }
 
-esp_err_t ADE7753::send(uint8_t data) {
-    // Error handler for esp callbacks
-    esp_err_t ret;
+
+esp_err_t ADE7753::transaction(size_t len, void *tx_buffer, void *rx_buffer) {    
+    
+    // Return inmediately if there are no bits to transfer
+    if (len == 0) {
+        return ESP_OK;
+    }
 
     // SPI Transaction structure. See `struct spi_transaction_t`
-    // https://github.com/espressif/esp-idf/blob/master/components/driver/include/driver/spi_master.h
-    spi_transaction_t t = {
-        // Bitwise OR of SPI_TRANS_* flags
-        .flags = SPI_TRANS_USE_TXDATA,
-        .cmd = (uint16_t)0,
-        .addr = (uint64_t)0,
+    spi_transaction_t t;
+        
+    // Zero the transaction
+    memset(&t, 0, sizeof(spi_transaction_t));
 
-        // Total data length, in bits
-        .length = (size_t)8,
-        .rxlength = (size_t)0,
-        .user = (void *)0,  // User-defined variable. Can be used to store eg
-                            // transaction ID
+    t.length = len;
+    t.tx_buffer = tx_buffer;
+    t.rx_buffer = rx_buffer;
 
-        // Pointer to transmit buffer, or NULL for no MOSI phase
-        // If SPI_USE_TXDATA is set, data set here is sent directly from this
-        // variable.
-        {.tx_data = {data, 0, 0, 0}},
-        /**
-         * Sometimes, the amount of data is very small making it less than
-         * optimal allocating a separate buffer for it. If the data to be
-         * transferred is 32 bits or less, it can be stored in the transaction
-         * struct itself. For transmitted data, use the tx_data member for this
-         * and set the SPI_USE_TXDATA flag on the transmission. For received
-         * data, use rx_data and set SPI_USE_RXDATA. In both cases, do not touch
-         * the tx_buffer or rx_buffer members, because they use the same memory
-         * locations as tx_data and rx_data.
-         */
-
-        // Pointer to receive buffer, or NULL for no MISO phase. Written by 4
-        // bytes-unit if DMA is used.
-        // If SPI_USE_RXDATA is set, data is received directly to this variable
-        // When rx_buffer is NULL (and SPI_USE_RXDATA) is not set) the read
-        // phase is skipped.
-        {.rx_buffer = (void *)0},
-    };
-
-    // Send the command to the ADE7753
-    ret = spi_device_transmit(_SPI, &t);
-    /**
-     *         - ESP_ERR_INVALID_ARG   if parameter is invalid
-     *         - ESP_OK                on success
-     */
-    ESP_ERROR_CHECK(ret);
-
-    return ret;  // TODO: Move delay to device post cmd and replace `ret` with
-                 // the `spi_device_transmit` return.
+    if (rx_buffer != NULL) {
+        t.rxlength = len;
 }
 
-uint8_t ADE7753::receive() {
-    // Allocate memory for return value
-    uint8_t data;
-
-    // Error handler for esp callbacks
-    esp_err_t ret;
-
-    // SPI Transaction structure. See `struct spi_transaction_t`
-    // https://github.com/espressif/esp-idf/blob/master/components/driver/include/driver/spi_master.h
-    spi_transaction_t t = {
-        // Bitwise OR of SPI_TRANS_* flags
-        .flags = (uint32_t)0,
-        .cmd = (uint16_t)0,
-        .addr = (uint64_t)0,
-
-        // Total data length, in bits
-        /**
-         * With the ADE7753 in communications mode (i.e., CS logic low), an
-         * 8-bit write to the communications register first takes place. The MSB
-         * of this byte transfer is a 0, indicating that the next data transfer
-         * operation is a read. The LSBs of this byte contain the address of the
-         * register that is to be read
-         */
-        .length = (size_t)8,
-        .rxlength = (size_t)0,
-        .user = (void *)0,  // User-defined variable. Can be used to store eg
-                            // transaction ID
-
-        // Pointer to transmit buffer, or NULL for no MOSI phase
-        // If SPI_USE_TXDATA is set, data set here is sent directly from this
-        // variable.
-        // When tx_buffer is NULL (and SPI_USE_TXDATA) is not set) the write
-        // phase is skipped.
-        {.tx_buffer = (const void *)0},
-
-        // Pointer to receive buffer, or NULL for no MISO phase. Written by 4
-        // bytes-unit if DMA is used.
-        {.rx_buffer = &data},
-    };
-
-    // Read the response
-    ret = spi_device_transmit(_SPI, &t);
-    /**
-     *         - ESP_ERR_INVALID_ARG   if parameter is invalid
-     *         - ESP_OK                on success
-     */
-    ESP_ERROR_CHECK(ret);
-
-    // TODO: Add some check ESP_OK to return data?
-    return data;
+    // Transmit the message and return the operation result
+    return spi_device_transmit(_SPI, &t);  
 }
 
 uint8_t ADE7753::read8(uint8_t reg) {
@@ -361,14 +276,15 @@ uint8_t ADE7753::read8(uint8_t reg) {
     enableChip();
 
     // Send the read command
-    send(reg);
+    transaction(8, &reg, NULL);
 
     // Wait at least 4us after a write operation (write to comm register) to
     // ensure propper operation.
     ets_delay_us(5);
 
     // Receive data
-    uint8_t data = receive();
+    uint8_t data;
+    transaction(8, NULL, &data);
 
     // Disable ADE7753 communication mode
     disableChip();
@@ -388,17 +304,17 @@ uint16_t ADE7753::read16(uint8_t reg) {
     enableChip();
 
     // Send the read command
-    send(reg);
-
-    // Wait at least 4us after a write operation (write to comm register) to
-    // ensure propper operation.
+    transaction(8, &reg, NULL);
+    
+    // Wait at least 4us after a write operation (write to comm register) to ensure propper operation.
     ets_delay_us(5);
 
     // Receive MSB byte of data
-    uint16_t data = (uint16_t)(receive() << 8);
+    uint16_t data;
+    transaction(16, NULL, &data);
 
-    // Receive LSB byte of data
-    data |= (uint16_t)receive();
+    // Shift data
+    data = (data >> 8) | (data << 8);
 
     // Disable ADE7753 communication mode
     disableChip();
@@ -418,20 +334,14 @@ uint32_t ADE7753::read24(uint8_t reg) {
     enableChip();
 
     // Send the read command
-    send(reg);
-
-    // Wait at least 4us after a write operation (write to comm register) to
-    // ensure propper operation.
+    transaction(8, &reg, NULL);
+        
+    // Wait at least 4us after a write operation (write to comm register) to ensure propper operation.
     ets_delay_us(5);
 
     // Receive MSB byte of data
-    uint32_t data = (uint32_t)(receive() << 16);
-
-    // Receive second byte of data
-    data |= (uint32_t)(receive() << 8);
-
-    // Receive third LSB byte of data
-    data |= (uint32_t)receive();
+    uint32_t data;
+    transaction(24, NULL, &data);
 
     // Disable ADE7753 communication mode
     disableChip();
@@ -450,14 +360,14 @@ esp_err_t ADE7753::write8(uint8_t reg, uint8_t data) {
     // Clear the reserved bit
     reg &= ~(0x01 << 6);
 
+    // Code the message.
+    uint32_t _data = (reg << 0) | (data << 8);
+
     // Enable ADE7753 communication mode
     ret = enableChip();
 
-    // Send the write command
-    ret = send(reg);
-
-    // Send the data
-    ret = send(data);
+    // Send the message
+    ret = transaction(16, &_data, NULL);
 
     // Disable ADE7753 communication mode
     ret = disableChip();
@@ -475,21 +385,17 @@ esp_err_t ADE7753::write16(uint8_t reg, uint16_t data) {
     // Clear the reserved bit
     reg &= ~(0x01 << 6);
 
-    // Split the data into 2 bytes
-    uint8_t dataMSB = (uint8_t)data >> 8;
-    uint8_t dataLSB = (uint8_t)data & 0x0F;
+    // Shift data
+    data = (data << 8) | (data >> 8);
 
+    // Code the message.
+    uint32_t _data = (reg << 0) | (data << 8);
+    
     // Enable ADE7753 communication mode
     ret = enableChip();
 
-    // Send the write command
-    ret = send(reg);
-
-    // Send the MSB data
-    ret = send(dataMSB);
-
-    // Send the LSB data
-    ret = send(dataLSB);
+    // Send the message
+    ret = transaction(24, &_data, NULL);
 
     // Disable ADE7753 communication mode
     ret = disableChip();

@@ -476,24 +476,20 @@ class ADE7753 {
 	private:
 
 		/**
-		 * @brief Send a command/data to ADE7753
+		 * @brief Send/receive SPI data to the ADE7753
 		 * 
-		 * @param data 8 bits of data to send
+		 * @param len transaction bit length
+		 * 
+		 * @param tx_buffer pointer to a transmit buffer, should have len bits
+		 * 
+		 * @param rx_buffer pointer to a receive buffer, should have len bits
 		 * 
 		 * @return      
 		 *         - ESP_ERR_INVALID_ARG   if parameter is invalid
 		 *         - ESP_OK                on success
 		 * 
-		*/
-		esp_err_t send(uint8_t data);
-
-		/**
-		 * @brief Receive data from ADE7753
-		 * 
-		 * @return 8 bit data from ADE7753
-		 * 
-		*/
-		uint8_t receive(void);
+		 */
+		esp_err_t transaction(size_t len, void *tx_buffer, void *rx_buffer);
 
 		/**
 		 * @brief Read 8 bits from the device at specified register
