@@ -12,8 +12,10 @@ ADE7753 library for esp32 w/ esp-idf framework
 #include "string.h"
 #include "ADE7753.h"
 #include "driver/gpio.h"
-#include "driver/spi_master.h"
+// #include "driver/spi_master.h"
+#include "spi_master_nodma.h"
 #include "esp_system.h"
+
 
 //********************************************************************************
 //      WaveformSample CLASS
@@ -89,7 +91,7 @@ ADE7753::ADE7753(void) {}
 
 ADE7753::~ADE7753(void) {}
 
-void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
+esp_err_t ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
                         gpio_num_t SCLK = DEF_SCLK, gpio_num_t CS = DEF_SCLK,
                         int spiFreq = DEF_SPI_FREQ) {
     // DOCS:
@@ -106,9 +108,6 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
     _CS = CS;
     _spiFreq = spiFreq;
 
-    // Error handler for esp callbacks
-    esp_err_t ret;
-
     // Configure ChipSelect pin
     gpio_config_t gpio_CS = {
         .pin_bit_mask = (1ULL << _CS),
@@ -119,13 +118,13 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
     };
     ESP_ERROR_CHECK( gpio_config(&gpio_CS) );
     disableChip();
-    
+
     // SPI BUS configuration structure
-    spi_bus_config_t buscfg = {
-        // GPIO pin for Master In Slave Out (=spi_q) signal, or -1 if not used.
+    static spi_nodma_bus_config_t spiBusCFG = {
+        // GPIO pin for Master Out Slave In (=spi_d) signal, or -1 if not used.
         .mosi_io_num = _DIN,
 
-        // GPIO pin for Master Out Slave In (=spi_d) signal, or -1 if not used.
+        // GPIO pin for Master In Slave Out (=spi_q) signal, or -1 if not used.
         .miso_io_num = _DOUT,
 
         // GPIO pin for Spi CLocK signal, or -1 if not used.
@@ -138,91 +137,86 @@ void ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DIN,
         // GPIO pin for HD (HolD) signal which is used as D3 in 4-bit
         // communication modes, or -1 if not used.
         .quadhd_io_num = -1,
-
-		// Maximum transfer size, in bytes. Defaults to 4094 if 0. 
-        .max_transfer_sz = 4, // TODO: Calculate proper value.
-
-        // Abilities of bus to be checked by the driver. Or-ed value of
-        // ``SPICOMMON_BUSFLAG_*`` flags.
-        .flags = (uint32_t)0,
-
-        // Interrupt flag for the bus to set the priority, and IRAM attribute
-        .intr_flags = 0,
     };
 
-    // Initialize the SPI bus using HSPI host without DMA.
-    ret = spi_bus_initialize(HSPI_HOST, &buscfg, 0);
-	/**
-	 * ESP_ERR_INVALID_ARG if configuration is invalid
-	 * ESP_ERR_INVALID_STATE if host already is in use
-	 * ESP_ERR_NO_MEM if out of memory
-	 * ESP_OK on success 
-	 */
-    ESP_ERROR_CHECK(ret);
-
     // SPI Device Interface configuration structure.
-    // See `spi_device_interface_config_t` in
-    // https://github.com/espressif/esp-idf/blob/master/components/driver/include/driver/spi_master.h
-    spi_device_interface_config_t ade7753_devcfg = {
+    spi_nodma_device_interface_config_t spiDevCFG = {
+        // Amount of bits in command phase (0-16)
         .command_bits = 0,
+
+        // Amount of bits in address phase (0-64)
         .address_bits = 0,
+
+        // Amount of dummy bits to insert between address and data phase
         .dummy_bits = 0,
 
         // SPI mode (0-3)
-        // Clock polarity and phase. See https://en.wikipedia.org/wiki/Serial_Peripheral_Interface#Clock_polarity_and_phase
         .mode = 1,
 
+        // Duty cycle of positive clock, in 1/256th increments (128 = 50%/50%
+        // duty). Setting this to 0 (=not setting it) is equivalent to setting
+        // this to 128.
         .duty_cycle_pos = 0,
+
+        // Amount of SPI bit-cycles the cs should be activated before the
+        // transmission (0-16). This only works on half-duplex transactions.
         .cs_ena_pretrans = 0,
-        .cs_ena_posttrans = 0, // TODO: Fix this value
 
-		// Clock speed, divisors of 80MHz, in Hz. See ``SPI_MASTER_FREQ_*``.
+        // Amount of SPI bit-cycles the cs should stay active after the
+        // transmission (0-16)
+        .cs_ena_posttrans = 0,
+
+        // Clock speed, in Hz
         .clock_speed_hz = _spiFreq,
-        .input_delay_ns = 0,
 
-        // SPI Chip Select pin
+        // CS GPIO pin for this device, handled by hardware; set to -1 if not
+        // used
         .spics_io_num = -1,
 
+        // CS GPIO pin for this device, handled by software
+        // (spi_nodma_device_select/spi_nodma_device_deselect); only used if
+        // spics_io_num=-1
+        .spics_ext_io_num = -1,
+
+        // Bitwise OR of SPI_DEVICE_* flags
         .flags = SPI_DEVICE_HALFDUPLEX | SPI_DEVICE_NO_DUMMY,
 
-        // Transaction queue size. This sets how many transactions can be 'in the air' (queued using spi_device_queue_trans but not yet finished using spi_device_get_trans_result) at the same time
-        .queue_size = 2, // TODO: Check this value
-        
-        // Callback to be called before and after a transmission is made.
+        // Transaction queue size. This sets how many transactions can be 'in
+        // the air' (queued using spi_device_queue_trans but not yet finished
+        // using spi_device_get_trans_result) at the same time
+        .queue_size = 2,
+
+        // Callback to be called before a transmission is started. This callback
+        // from 'spi_nodma_transfer_data' function.
         .pre_cb = 0,
+
+        // Callback to be called after a transmission has completed. This
+        // callback from 'spi_nodma_transfer_data' function.
         .post_cb = 0,
+
+        // **INTERNAL** 1 if the device's CS pin is active
+        .selected = 0,
     };
 
     // Attach the LCD to the SPI bus
-    ret = spi_bus_add_device(HSPI_HOST, &ade7753_devcfg, &_SPI);
-    /**
-     * ESP_ERR_INVALID_ARG if parameter is invalid
-     * ESP_ERR_NOT_FOUND if host doesn’t have any free CS slots
-     * ESP_ERR_NO_MEM if out of memory
-     * ESP_OK on success
-     */
-    ESP_ERROR_CHECK(ret);
+    ESP_ERROR_CHECK(spi_nodma_bus_add_device(HSPI_HOST, &spiBusCFG, &spiDevCFG, &_SPI));
+    // ret = spi_bus_add_device(HSPI_HOST, &ade7753_devcfg, &_SPI);
 
     // TODO: Separate methods for bus initialization and device attachment
+
+    return ESP_OK;
 }
 
-void ADE7753::closeSPI(void) {
-    // Error handler for esp callbacks
-    esp_err_t ret;
+esp_err_t ADE7753::closeSPI(void) {
 
     // Remove the ADE7753 from the SPI bus
-    ret = spi_bus_remove_device(_SPI);
-    /**
-     *         - ESP_ERR_INVALID_ARG   if parameter is invalid
-     *         - ESP_ERR_INVALID_STATE if device already is freed
-     *         - ESP_OK                on success
-     */
-    ESP_ERROR_CHECK(ret);
+    ESP_ERROR_CHECK(spi_nodma_bus_remove_device(_SPI));
 
     // SPI.setDataMode(SPI_MODE0); // TODO: No_arduino
     ets_delay_us(10);  // TODO: Check this delay. Is it necessary?
 
     // TODO: Separate methods to dettach spi device and remove SPI bus.
+    return ESP_OK;
 }
 
 /*****************************
@@ -251,11 +245,11 @@ esp_err_t ADE7753::transaction(size_t len, void *tx_buffer, void *rx_buffer) {
         return ESP_OK;
     }
 
-    // SPI Transaction structure. See `struct spi_transaction_t`
-    spi_transaction_t t;
+    // SPI Transaction structure. 
+    spi_nodma_transaction_t t;
         
     // Zero the transaction
-    memset(&t, 0, sizeof(spi_transaction_t));
+    memset(&t, 0, sizeof(spi_nodma_transaction_t));
 
     t.length = len;
     t.tx_buffer = tx_buffer;
