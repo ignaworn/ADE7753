@@ -14,7 +14,7 @@ ADE7753 library for esp32 w/ esp-idf framework
 
 #include "esp_system.h"
 #include "driver/gpio.h"
-#include "driver/spi_master.h"
+#include "spi_master_nodma.h"
 /*
 =================================================================================================
 Defines
