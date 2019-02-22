@@ -116,7 +116,6 @@ esp_err_t ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DI
         .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK( gpio_config(&gpio_CS) );
-    disableChip();
 
     // SPI BUS configuration structure
     static spi_nodma_bus_config_t spiBusCFG = {
@@ -175,10 +174,10 @@ esp_err_t ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DI
         // CS GPIO pin for this device, handled by software
         // (spi_nodma_device_select/spi_nodma_device_deselect); only used if
         // spics_io_num=-1
-        .spics_ext_io_num = -1,
+        .spics_ext_io_num = _CS,
 
         // Bitwise OR of SPI_DEVICE_* flags
-        .flags = SPI_DEVICE_HALFDUPLEX | SPI_DEVICE_NO_DUMMY,
+        .flags = SPI_DEVICE_HALFDUPLEX,
 
         // Transaction queue size. This sets how many transactions can be 'in
         // the air' (queued using spi_device_queue_trans but not yet finished
@@ -199,7 +198,12 @@ esp_err_t ADE7753::configSPI(gpio_num_t DOUT = DEF_DOUT, gpio_num_t DIN = DEF_DI
 
     // Attach the LCD to the SPI bus
     ESP_ERROR_CHECK(spi_nodma_bus_add_device(HSPI_HOST, &spiBusCFG, &spiDevCFG, &_SPI));
-    // ret = spi_bus_add_device(HSPI_HOST, &ade7753_devcfg, &_SPI);
+
+    // Keep the chip selected, so the library do not manage ChipSelect pin.
+    spi_nodma_device_select(_SPI, 0);
+
+    // Disable communication mode
+    disableChip();
 
     // TODO: Separate methods for bus initialization and device attachment
 
@@ -210,9 +214,6 @@ esp_err_t ADE7753::closeSPI(void) {
 
     // Remove the ADE7753 from the SPI bus
     ESP_ERROR_CHECK(spi_nodma_bus_remove_device(_SPI));
-
-    // SPI.setDataMode(SPI_MODE0); // TODO: No_arduino
-    ets_delay_us(10);  // TODO: Check this delay. Is it necessary?
 
     // TODO: Separate methods to dettach spi device and remove SPI bus.
     return ESP_OK;
@@ -259,7 +260,7 @@ esp_err_t ADE7753::transaction(size_t len, void *tx_buffer, void *rx_buffer) {
 }
 
     // Transmit the message and return the operation result
-    return spi_device_transmit(_SPI, &t);  
+    return spi_nodma_transfer_data(_SPI, &t);  
 }
 
 uint8_t ADE7753::read8(uint8_t reg) {
@@ -277,7 +278,10 @@ uint8_t ADE7753::read8(uint8_t reg) {
 
     // Wait at least 4us after a write operation (write to comm register) to
     // ensure propper operation.
-    ets_delay_us(5);
+    //
+    // **** Since spi_master_nodma library has a ~5 usec delay between
+    // transactions there is no need for the delay
+    // ets_delay_us(5);
 
     // Receive data
     uint8_t data;
@@ -303,8 +307,12 @@ uint16_t ADE7753::read16(uint8_t reg) {
     // Send the read command
     transaction(8, &reg, NULL);
     
-    // Wait at least 4us after a write operation (write to comm register) to ensure propper operation.
-    ets_delay_us(5);
+    // Wait at least 4us after a write operation (write to comm register) to
+    // ensure propper operation.
+    //
+    // **** Since spi_master_nodma library has a ~5 usec delay between
+    // transactions there is no need for the delay
+    // ets_delay_us(5);
 
     // Receive MSB byte of data
     uint16_t data;
@@ -333,8 +341,12 @@ uint32_t ADE7753::read24(uint8_t reg) {
     // Send the read command
     transaction(8, &reg, NULL);
         
-    // Wait at least 4us after a write operation (write to comm register) to ensure propper operation.
-    ets_delay_us(5);
+    // Wait at least 4us after a write operation (write to comm register) to
+    // ensure propper operation.
+    //
+    // **** Since spi_master_nodma library has a ~5 usec delay between
+    // transactions there is no need for the delay
+    // ets_delay_us(5);
 
     // Receive MSB byte of data
     uint32_t data;
