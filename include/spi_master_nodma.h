@@ -147,8 +147,9 @@ struct spi_nodma_device_t {
 };
 
 typedef struct spi_nodma_device_t* spi_nodma_device_handle_t;  ///< Handle for a device on a SPI bus
-typedef struct spi_nodma_host_t* spi_nodma_host_handle_t;
-typedef struct spi_nodma_device_interface_config_t* spi_nodma_device_interface_config_handle_t;
+// typedef struct spi_nodma_host_t* spi_nodma_host_handle_t;
+// typedef struct spi_nodma_device_interface_config_t* spi_nodma_device_interface_config_handle_t;
+// This lines were commented because had errors, and they were not used.
 
 
 /**
