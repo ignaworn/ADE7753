@@ -227,14 +227,16 @@ esp_err_t ADE7753::closeSPI(void) {
 
 esp_err_t ADE7753::enableChip() {
     // Set Chip Select on LOW to enable the ADE7753
-    // TODO: Check if this is correct
-    return gpio_set_level(_CS, 0);
+    REG_WRITE(GPIO_OUT_W1TC_REG, (1ULL << _CS)); // TODO: What if _CS is on pins 32-39? 
+    
+    return ESP_OK; 
 }
 
 esp_err_t ADE7753::disableChip() {
     // Set Chip Select on HIGH to disable the ADE7753
-    // TODO: Check if this is correct
-    return gpio_set_level(_CS, 1);
+    REG_WRITE(GPIO_OUT_W1TS_REG, (1ULL << _CS)); // TODO: What if _CS is on pins 32-39? 
+    
+    return ESP_OK; 
 }
 
 
