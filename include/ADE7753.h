@@ -490,6 +490,11 @@ class ADE7753 {
 		 */
 		int8_t getTemperature();
 
+		float getVrms();
+
+		float getIrms();
+
+		esp_err_t setCyclesToMeasure(uint8_t Cycles);
 
 	// Private methods
 	private:
@@ -613,9 +618,14 @@ class ADE7753 {
 		 *	
 		 **/
 		uint8_t _measuramentStatus = NO_MEASURE;
+		uint8_t _cyclesToMeasure = 10;
+		uint8_t _measureCyclesLeft = 10;
 		WaveformSample *_myWaveformPtr;
 		uint16_t _period = 0;
 		int8_t _temperature = -127;
+		float _vrms = -1;
+		float _irms = -1;
+		float _measAccReg = 0;
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
 		uint16_t _internalInterruptRegister = 0x0000;

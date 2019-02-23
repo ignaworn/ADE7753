@@ -749,8 +749,22 @@ uint16_t ADE7753::getMaskInterrupt(void) {
 }
 
 esp_err_t ADE7753::startMeasure(uint8_t Parameter) {
+    if (_measuramentStatus != NO_MEASURE){
+        return ESP_ERR_INVALID_STATE;
+    }  
     switch (Parameter) {
         case VOLTAGE:
+            _measureCyclesLeft = _cyclesToMeasure;
+            setInterrupt(ZX_BIT);
+             _measuramentStatus = VOLTAGE;
+             _measAccReg = 0;
+             break;
+        case CURRENT:
+            _measureCyclesLeft = _cyclesToMeasure;
+            setInterrupt(ZX_BIT);
+             _measuramentStatus = CURRENT;
+             _measAccReg = 0;
+             break;
         case TEMPERATURE:
             _measuramentStatus = TEMPERATURE;
             setInterrupt(TEMPC_BIT);
@@ -758,6 +772,7 @@ esp_err_t ADE7753::startMeasure(uint8_t Parameter) {
             break;
         case WAVEFORM_M:
             setInterrupt(WSMP_BIT | ZX_BIT);
+            _measuramentStatus = WAVEFORM_M;
             break;
         case FREQUENCY:
             setInterrupt(ZX_BIT);
@@ -859,9 +874,35 @@ float ADE7753::getFrequency(){
         _period = 0;
         return _frequency;
     }
-    return 0;
+    return 0; //TODO->check what happens if line frequency is actually 0.
 }
 
+float ADE7753::getVrms(){
+    if (_vrms){
+        float  __vrms = _vrms;
+        _vrms = -1;
+        return __vrms;
+    }
+    return -1;
+}
+
+float ADE7753::getIrms(){
+    if (_irms){
+        float  __irms = _irms;
+        _irms = -1;
+        return __irms;
+    }
+    return -1;
+}
+
+esp_err_t ADE7753::setCyclesToMeasure(uint8_t Cycles){
+    if (_measuramentStatus == NO_MEASURE){
+        _cyclesToMeasure = Cycles;
+        _measureCyclesLeft = Cycles;
+        return ESP_OK;
+    }
+    return ESP_ERR_INVALID_STATE;
+}
 
 void ADE7753::ZXISR(){
     // TODO->Add the rest of this ISR behaviour, now only waveform sampling actions are done.
@@ -883,8 +924,24 @@ void ADE7753::ZXISR(){
         case NO_MEASURE:
             break;
         case VOLTAGE:
+            if(_measureCyclesLeft){
+                _measureCyclesLeft--;
+                _measAccReg += getVRMS();
+            }else{
+                _vrms = (float) _measAccReg / _cyclesToMeasure; //TODO->add conversion to real units parameters.
+                clearInterrupt(ZX_BIT);
+                _measuramentStatus = NO_MEASURE;
+            }
             break;
         case CURRENT:
+            if(_measureCyclesLeft){
+                _measureCyclesLeft--;
+                _measAccReg += getIRMS();
+            }else{
+                _irms = (float) _measAccReg / _cyclesToMeasure; //TODO->add conversion to real units parameters.
+                clearInterrupt(ZX_BIT);
+                _measuramentStatus = NO_MEASURE;
+            }
             break;
         case WAVEFORM_M:
             if (_myWaveformPtr != NULL){
@@ -892,13 +949,14 @@ void ADE7753::ZXISR(){
                 if(_myWaveformPtr->getCurrentCycle() > _myWaveformPtr->getCyclesToSample()){
                     _myWaveformPtr->setDataAvailable();
                     clearInterrupt(WSMP_BIT | ZX_BIT);
-                    //TODO->Check if we need to do anything else.
+                    _measuramentStatus = NO_MEASURE;
                 }
             }
             break;
         case FREQUENCY:
             _period = getPeriod();
             clearInterrupt(ZX_BIT);
+            _measuramentStatus = NO_MEASURE;
             break;
         default:
             break;
