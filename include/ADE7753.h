@@ -496,12 +496,12 @@ class ADE7753 {
 
 		esp_err_t setCyclesToMeasure(uint8_t Cycles);
 
+		void destroyWaveformData();
+
 	// Private methods
 	private:
 
 		void stopSampling(); //TODO-> check if these need to be public
-
-		void destroyWaveformData();
 
 		void ZXISR();
 
@@ -630,7 +630,7 @@ class ADE7753 {
 		float _measAccReg = 0;
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
-		uint16_t _internalInterruptRegister = 0x0000;
+		uint16_t _internalInterruptRegister = 0x01 << 6;
 
 
 
