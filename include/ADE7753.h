@@ -14,7 +14,7 @@ ADE7753 library for esp32 w/ esp-idf framework
 
 #include "esp_system.h"
 #include "driver/gpio.h"
-#include "driver/spi_master.h"
+#include "spi_master_nodma.h"
 /*
 =================================================================================================
 Defines
@@ -238,9 +238,9 @@ class ADE7753 {
 		* @param spiFreq, SPI Data transfer frequency
 		* 
 		*/
-		void configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq);
+		esp_err_t configSPI(gpio_num_t DOUT, gpio_num_t DIN, gpio_num_t SCLK, gpio_num_t CS, int spiFreq);
 
-		void closeSPI(void);
+		esp_err_t closeSPI(void);
 
 		//----------------------------------------------------------------------------
 		// Modos y configs
@@ -590,7 +590,7 @@ class ADE7753 {
 		esp_err_t disableChip();
 
 		// SPI Object Handler
-		spi_device_handle_t _SPI;
+		spi_nodma_device_handle_t _SPI;
 
 		// SPI default pins 
 		gpio_num_t _DOUT = DEF_DOUT;
