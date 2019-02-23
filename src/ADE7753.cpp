@@ -816,6 +816,18 @@ esp_err_t ADE7753::configWaveform(uint8_t channel, uint8_t numberOfCycles, uint8
             tempMode |= DTRT_27_9;
             break;
     }
+
+    switch (channel) {
+        case 1:
+            tempMode |= WAVESEL_CH1;
+            break;
+        case 0:
+            tempMode |= WAVESEL_CH2;
+            break;
+        default:
+            return ESP_ERR_INVALID_ARG;
+            break;
+    }
     setMode(tempMode);
 
     return ESP_OK;
