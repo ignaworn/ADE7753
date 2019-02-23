@@ -496,12 +496,12 @@ class ADE7753 {
 
 		esp_err_t setCyclesToMeasure(uint8_t Cycles);
 
+		void destroyWaveformData();
+		
 	// Private methods
 	private:
 
 		void stopSampling(); //TODO-> check if these need to be public
-
-		void destroyWaveformData();
 
 		void ZXISR();
 
