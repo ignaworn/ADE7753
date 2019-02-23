@@ -498,6 +498,11 @@ class ADE7753 {
 
 		void destroyWaveformData();
 
+		void ADE7753::setZeroCrossingTimeoutIRQ();
+
+		void ADE7753::clearZeroCrossingTimeoutIRQ();
+ 
+
 	// Private methods
 	private:
 

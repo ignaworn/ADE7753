@@ -500,6 +500,14 @@ void ADE7753::setZeroCrossingTimeout(uint16_t d) { write16(ZXTOUT, d); }
 
 uint16_t ADE7753::getZeroCrossingTimeout() { return read16(ZXTOUT); }
 
+void ADE7753::setZeroCrossingTimeoutIRQ(){
+    setInterrupt(ZXTO_BIT);
+}
+
+void ADE7753::clearZeroCrossingTimeoutIRQ(){
+    clearInterrupt(ZXTO_BIT);
+}
+
 /**
  * Sag Line Cycle Register. This 8-bit register specifies the number of
  * consecutive line cycles the signal on Channel 2 must be below SAGLVL
@@ -875,6 +883,7 @@ void ADE7753::ZXISR(){
 		 **/
     switch (_measuramentStatus){
         case NO_MEASURE:
+            clearInterrupt(ZX_BIT); //TODO->check this, the idea is that if we got here and are not measuring we should not come back.
             break;
         case VOLTAGE:
             if(_measureCyclesLeft){
