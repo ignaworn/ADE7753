@@ -505,6 +505,8 @@ class ADE7753 {
 
 		void ZXISR();
 
+		void ZXTOUTISR();
+
 		/**
 		 * @brief Send/receive SPI data to the ADE7753
 		 * 

@@ -975,6 +975,42 @@ void ADE7753::ZXISR(){
     }
 }
 
+void ADE7753::ZXTOUTISR(){
+    switch (_measuramentStatus){
+        case NO_MEASURE:
+            return;
+            break;
+        case VOLTAGE:
+            _measuramentStatus = NO_MEASURE;
+            _vrms = -1;
+            clearInterrupt(ZX_BIT);
+            _measureCyclesLeft = _cyclesToMeasure;
+            _measAccReg = 0;
+            break;
+        case CURRENT:
+            _measuramentStatus = NO_MEASURE;
+            _irms = -1;
+            clearInterrupt(ZX_BIT);
+            _measureCyclesLeft = _cyclesToMeasure;
+            _measAccReg = 0;
+            break;
+        case FREQUENCY:
+            clearInterrupt(ZX_BIT);
+            _measuramentStatus = NO_MEASURE;
+            _period = 0;
+            break;
+        case TEMPERATURE:
+            _measuramentStatus = NO_MEASURE;
+            _temperature = -127;
+            clearInterrupt(TEMPC_BIT);
+            break;
+        case WAVEFORM_M: //TODO-> check how to fully stop and if we should destroy the waveform object here.
+             _measuramentStatus = NO_MEASURE;
+             clearInterrupt(WSMP_BIT | ZX_BIT);           
+            break;            
+    }
+}
+
 esp_err_t ADE7753::isrUpdate() {
     uint16_t isrStatus = getMaskInterrupt();
 
@@ -989,8 +1025,8 @@ esp_err_t ADE7753::isrUpdate() {
         _temperature = (int8_t)read8(TEMP);
         clearInterrupt(TEMPC_BIT);
     }
-    if (isrStatus & WSMP_BIT) {
-        waveformSampleAvailable();
+    if (isrStatus & ZXTO_BIT){
+        ZXTOUTISR();
     }
     return ESP_OK;
 }
