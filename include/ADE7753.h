@@ -387,7 +387,7 @@ class ADE7753 {
 		uint16_t getPeriod(void);
 
 
-		float getFrecuency(void);
+		float getFrequency(void);
 
 
 		void setLineCyc(uint16_t d);
@@ -472,7 +472,7 @@ class ADE7753 {
 		 */
 		esp_err_t configWaveform(uint8_t channel, uint8_t numberOfCycles=5, uint8_t sampleRate = 0);
 
-		uint8_t waveformSampleAvailable();
+		esp_err_t waveformSampleAvailable();
 
 		uint32_t* getWaveformDataPtr();
 
@@ -490,14 +490,15 @@ class ADE7753 {
 		 */
 		int8_t getTemperature();
 
+
+	// Private methods
+	private:
+
 		void stopSampling(); //TODO-> check if these need to be public
 
 		void destroyWaveformData();
 
 		void ZXISR();
-
-	// Private methods
-	private:
 
 		/**
 		 * @brief Send/receive SPI data to the ADE7753
@@ -613,11 +614,11 @@ class ADE7753 {
 		 **/
 		uint8_t _measuramentStatus = NO_MEASURE;
 		WaveformSample *_myWaveformPtr;
-
+		uint16_t _period = 0;
 		int8_t _temperature = -127;
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
-
+		uint16_t _internalInterruptRegister = 0x0000;
 
 
 

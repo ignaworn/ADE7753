@@ -709,7 +709,8 @@ void ADE7753::setInterrupt(uint16_t reg) {
     */
 
     // Write the Interrupt Enable Register
-    write16(IRQEN, getInterrupt() | reg);
+    _internalInterruptRegister |= reg;
+    write16(IRQEN, _internalInterruptRegister);
 }
 
 void ADE7753::clearInterrupt(uint16_t reg) {
@@ -732,12 +733,14 @@ void ADE7753::clearInterrupt(uint16_t reg) {
     */
 
     // Write the Interrupt Enable Register
-    write16(IRQEN, getInterrupt() & ~reg);
+    _internalInterruptRegister &= ~reg;
+    write16(IRQEN, _internalInterruptRegister );
 }
 
 uint16_t ADE7753::getInterrupt(void) {
-    // Return the Interrupt Enable Register
-    return read16(IRQEN);
+    // return the internal interrupt status register | TODO->check if not actually reading the chip interrupt register is right.
+    return _internalInterruptRegister;
+    // return read16(IRQEN);
 }
 
 uint16_t ADE7753::getMaskInterrupt(void) {
@@ -749,11 +752,16 @@ esp_err_t ADE7753::startMeasure(uint8_t Parameter) {
     switch (Parameter) {
         case VOLTAGE:
         case TEMPERATURE:
+            _measuramentStatus = TEMPERATURE;
             setInterrupt(TEMPC_BIT);
             setMode(TEMPSEL_BIT);
             break;
         case WAVEFORM_M:
             setInterrupt(WSMP_BIT | ZX_BIT);
+            break;
+        case FREQUENCY:
+            setInterrupt(ZX_BIT);
+            _measuramentStatus = FREQUENCY;
             break;
     }
     return ESP_OK;
@@ -798,12 +806,12 @@ esp_err_t ADE7753::configWaveform(uint8_t channel, uint8_t numberOfCycles, uint8
     return ESP_OK;
 }
 
-uint8_t ADE7753::waveformSampleAvailable() {//TODO->Change to esp_err_t
+esp_err_t ADE7753::waveformSampleAvailable() {
 
-    if (_myWaveformPtr == NULL) { return 0;}
+    if (_myWaveformPtr == NULL) { return ESP_ERR_INVALID_STATE;}
     
     _myWaveformPtr->putData(read24(WAVEFORM));
-    return 1;
+    return ESP_OK;
 }
 
 uint8_t ADE7753::getMeasuramentStatus(){
@@ -844,7 +852,15 @@ int8_t ADE7753::getTemperature(){
     return -127;
 }
 
-
+float ADE7753::getFrequency(){
+    // CLKIN/4/32/60 Hz × 16 = 7457d |  f = CLKIN / (8 * _period)
+    if (_period){
+        float  _frequency = (float) CLKIN /(8 * _period);
+        _period = 0;
+        return _frequency;
+    }
+    return 0;
+}
 
 
 void ADE7753::ZXISR(){
@@ -881,6 +897,9 @@ void ADE7753::ZXISR(){
             }
             break;
         case FREQUENCY:
+            _period = getPeriod();
+            clearInterrupt(ZX_BIT);
+            break;
         default:
             break;
     }
