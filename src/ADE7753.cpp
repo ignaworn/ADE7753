@@ -976,7 +976,7 @@ void ADE7753::ZXISR(){
 }
 
 esp_err_t ADE7753::isrUpdate() {
-    uint16_t isrStatus = getResetStatus();
+    uint16_t isrStatus = getMaskInterrupt();
 
     if (isrStatus & WSMP_BIT) {
         waveformSampleAvailable();
