@@ -6,7 +6,8 @@ By: Ezequiel Pedace & Ignacio Worn
 Created:     7 Dic 2012
 Last update: 02 Feb 2019
 
-ADE7753 library for esp32 w/ esp-idf framework
+ADE7753 library for esp32 w/ esp-idf fra
+mework
 */
 
 #include "string.h"
@@ -54,17 +55,15 @@ WaveformSample::~WaveformSample() {
 
 uint16_t WaveformSample::getCurrentSample() { return _currentSample; }
 
+uint16_t WaveformSample::getTotalSamples() { return _totalSamples; }
+
 uint8_t WaveformSample::getDataAvailable() { return _dataAvailable; }
 
 void WaveformSample::setDataAvailable() { _dataAvailable = 1; }
 
-uint8_t WaveformSample::getCyclesToSample(){
-    return _cyclesToSample;
-}
+uint8_t WaveformSample::getCyclesToSample(){ return _cyclesToSample; }
 
-void WaveformSample::setCyclesToSample(uint8_t Cycles) {
-    _cyclesToSample = Cycles;
-}
+void WaveformSample::setCyclesToSample(uint8_t Cycles) { _cyclesToSample = Cycles; }
 
 uint8_t WaveformSample::getCurrentCycle() { return _currentCycle; }
 
@@ -75,7 +74,7 @@ uint32_t *WaveformSample::getData() { return _dataPtr; }
 void WaveformSample::putData( uint32_t Data ){
     *(_dataPtr+_currentSample) = Data;
     _currentSample++;
-    if (_currentSample > _totalSamples){
+    if (_currentSample >= _totalSamples){
         _dataAvailable = 1; //Check this other condition for sampling termination
         _currentSample--; // Just in case we came here again..
     }
@@ -495,7 +494,7 @@ esp_err_t ADE7753::clearMode(uint16_t mode) {
     // TODO:  Check if bit 6 is 1
     //      (SWRST) A data transfer should not take place to the ADE7753 for at
     //      least  18 μs after a software reset.
-    return write16(MODE, getMode() & !tempMode);
+    return write16(MODE, getMode() & ~tempMode);
 }
 
 uint16_t ADE7753::getMode() { return read16(MODE); }
@@ -539,7 +538,6 @@ uint32_t ADE7753::getVRMS(void) { return read24(VRMS); }
 
 uint16_t ADE7753::getPeriod(void) { return read16(PERIOD); }
 
-int8_t ADE7753::getTemp(void) { return (int8_t)read8(TEMP); }
 
 /**
  * Line Cycle Energy Accumulation Mode Line-Cycle Register.
@@ -727,7 +725,7 @@ void ADE7753::clearInterrupt(uint16_t reg) {
     */
 
     // Write the Interrupt Enable Register
-    write16(IRQEN, getInterrupt() & !reg);
+    write16(IRQEN, getInterrupt() & ~reg);
 }
 
 uint16_t ADE7753::getInterrupt(void) {
@@ -740,11 +738,21 @@ uint16_t ADE7753::getMaskInterrupt(void) {
     return (getResetStatus() & getInterrupt());
 }
 
-uint8_t ADE7753::getVrmsStatus() { return _isVrms; }
+esp_err_t ADE7753::startMeasure(uint8_t Parameter) {
+    switch (Parameter) {
+        case VOLTAGE:
+        case TEMPERATURE:
+            setInterrupt(TEMPC_BIT);
+            setMode(TEMPSEL_BIT);
+            break;
+        case WAVEFORM_M:
+            setInterrupt(WSMP_BIT | ZX_BIT);
+            break;
+    }
+    return ESP_OK;
+}
 
-uint8_t ADE7753::getIrmsStatus() { return _isIrms; }
-
-esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8_t sampleRate) {
+esp_err_t ADE7753::configWaveform(uint8_t channel, uint8_t numberOfCycles, uint8_t sampleRate) {
     if (numberOfCycles > MAXSAMPLECYCLES) {
         numberOfCycles = MAXSAMPLECYCLES;
     }
@@ -754,7 +762,9 @@ esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8
     if (_myWaveformPtr != NULL) {
         return ESP_ERR_INVALID_STATE;
     }
-      
+    if (_measuramentStatus != NO_MEASURE){
+        return ESP_ERR_INVALID_STATE;
+    }  
     _myWaveformPtr = new WaveformSample(sampleRate, numberOfCycles);
 
     uint16_t tempMode = getMode() & 0x87FF;  // first we mask out previous waveselect value.
@@ -777,12 +787,11 @@ esp_err_t ADE7753::sampleWaveform(uint8_t channel, uint8_t numberOfCycles, uint8
             break;
     }
     setMode(tempMode);
-    setInterrupt(WSMP_BIT);
 
     return ESP_OK;
 }
 
-uint8_t ADE7753::waveformSampleAvailable() {
+uint8_t ADE7753::waveformSampleAvailable() {//TODO->Change to esp_err_t
 
     if (_myWaveformPtr == NULL) { return 0;}
     
@@ -790,20 +799,102 @@ uint8_t ADE7753::waveformSampleAvailable() {
     return 1;
 }
 
+uint8_t ADE7753::getMeasuramentStatus(){
+    return _measuramentStatus;
+}
+
 void ADE7753::stopSampling(){
+    clearInterrupt(WSMP_BIT | ZX_BIT);
+}
+
+void ADE7753::destroyWaveformData(){
     delete _myWaveformPtr;
     _myWaveformPtr = NULL;
 }
 
+uint32_t *ADE7753::getWaveformDataPtr() {
+    if (_myWaveformPtr->getDataAvailable()) {
+        return _myWaveformPtr->getData();
+    } else {
+        return NULL;
+    }
+}
+
+uint16_t ADE7753::getWaveformDataTotalSamples() {
+    if (_myWaveformPtr->getDataAvailable()) {
+        return _myWaveformPtr->getTotalSamples();
+    } else {
+        return 0;
+    }
+}
+
+int8_t ADE7753::getTemperature(){
+    if (_temperature != -127){
+        int8_t __temperature = _temperature;
+        _temperature = -127;
+        return __temperature;
+    }
+    return -127;
+}
+
+
+
+
 void ADE7753::ZXISR(){
     // TODO->Add the rest of this ISR behaviour, now only waveform sampling actions are done.
-
-    if (_myWaveformPtr != NULL){
-        _myWaveformPtr->setCurrentCycle(_myWaveformPtr->getCurrentCycle()+1);
-        if(_myWaveformPtr->getCurrentCycle() > _myWaveformPtr->getCyclesToSample()){
-            _myWaveformPtr->setDataAvailable();
-            clearInterrupt(WSMP_BIT);
-            //TODO->Check if we need to do anything else.
-        }
+    		/**
+		 * 	Device activity flags
+		 * 
+		 *  NO_MEASURE 0
+		 *  VOLTAGE 1
+		 *  CURRENT 2
+		 *  WAVEFORM 3
+		 *  TEMPERATURE 4
+		 *  POWER_P 5
+		 *  POWER_Q 6
+		 *  POWER_S 7
+		 *  FREQUENCY 8 
+		 *	
+		 **/
+    switch (_measuramentStatus){
+        case NO_MEASURE:
+            break;
+        case VOLTAGE:
+            break;
+        case CURRENT:
+            break;
+        case WAVEFORM_M:
+            if (_myWaveformPtr != NULL){
+                _myWaveformPtr->setCurrentCycle(_myWaveformPtr->getCurrentCycle()+1);
+                if(_myWaveformPtr->getCurrentCycle() > _myWaveformPtr->getCyclesToSample()){
+                    _myWaveformPtr->setDataAvailable();
+                    clearInterrupt(WSMP_BIT | ZX_BIT);
+                    //TODO->Check if we need to do anything else.
+                }
+            }
+            break;
+        case FREQUENCY:
+        default:
+            break;
     }
+}
+
+esp_err_t ADE7753::isrUpdate() {
+    uint16_t isrStatus = getResetStatus();
+
+    if (isrStatus & WSMP_BIT) {
+        waveformSampleAvailable();
+    }
+    if (isrStatus & ZX_BIT) {
+        ZXISR();
+    }
+    if (isrStatus & TEMPC_BIT) {
+        _measuramentStatus = NO_MEASURE;
+        _temperature = (int8_t)read8(TEMP);
+        clearInterrupt(TEMPC_BIT);
+    }
+    if (isrStatus & WSMP_BIT) {
+        waveformSampleAvailable();
+    }
+    return ESP_OK;
 }

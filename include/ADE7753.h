@@ -21,6 +21,18 @@ Defines
 =================================================================================================
 */
 
+// Measurament status
+
+#define NO_MEASURE 0
+#define VOLTAGE 1
+#define CURRENT 2
+#define WAVEFORM_M 3
+#define TEMPERATURE 4
+#define POWER_P 5
+#define POWER_Q 6
+#define POWER_S 7
+#define FREQUENCY 8
+
 // Class Atributes
 
 #define MAXWAVEFORMDATA 10000
@@ -166,6 +178,8 @@ class WaveformSample { // TODO-> comment.
 		~WaveformSample();
 
 		uint16_t getCurrentSample();
+
+		uint16_t getTotalSamples();
 
 		uint8_t getDataAvailable();
 
@@ -373,15 +387,9 @@ class ADE7753 {
 		uint16_t getPeriod(void);
 
 
-		/**
-		 * @brief Returns the result of the last temperature measurement
-		 * 
-		 * @return 8 bit signed data
-		 */
-		int8_t getTemp(void);
-
-
 		float getFrecuency(void);
+
+
 		void setLineCyc(uint16_t d);
 		
 		
@@ -462,15 +470,31 @@ class ADE7753 {
 		 *     - ESP_OK Success
 		 *     - ESP_ERR_INVALID_STATE Waveform already in sample state
 		 */
-
-		esp_err_t sampleWaveform(uint8_t channel, uint8_t numberOfCycles=5, uint8_t sampleRate = 0);
+		esp_err_t configWaveform(uint8_t channel, uint8_t numberOfCycles=5, uint8_t sampleRate = 0);
 
 		uint8_t waveformSampleAvailable();
-		void stopSampling();
-		void ZXISR();
 
-		uint8_t getVrmsStatus();
-		uint8_t getIrmsStatus();
+		uint32_t* getWaveformDataPtr();
+
+		uint16_t getWaveformDataTotalSamples();
+
+		uint8_t getMeasuramentStatus();
+
+		esp_err_t startMeasure(uint8_t Parameter);
+
+		esp_err_t isrUpdate();
+		/**
+		 * @brief Returns the result of the last temperature measurement
+		 * 
+		 * @return 8 bit signed data
+		 */
+		int8_t getTemperature();
+
+		void stopSampling(); //TODO-> check if these need to be public
+
+		void destroyWaveformData();
+
+		void ZXISR();
 
 	// Private methods
 	private:
@@ -576,23 +600,21 @@ class ADE7753 {
 		/**
 		 * 	Device activity flags
 		 * 
-		 * isVrms: active vrms measure.
-		 * isIrms: active irms measure.
-		 * _myWaveformPtr!=NULL~: active waveform sampling.
-		 * 
-		 * 	Device error status flags TODO-> Check is these are necessary.
-		 * 
-		 * isZXTimeout: ZX timeout has happened.
-		 * isSag: Undervoltage.
-		 * isVpeak: Voltage peak detected.
-		 * isIpeak: Current peak detected.
+		 *  NO_MEASURE 0
+		 *  VOLTAGE 1
+		 *  CURRENT 2
+		 *  WAVEFORM_M 3
+		 *  TEMPERATURE 4
+		 *  POWER_P 5
+		 *  POWER_Q 6
+		 *  POWER_S 7
+		 *  FREQUENCY 8 
 		 *	
 		 **/
-
-		uint8_t _isVrms = 0;
-		uint8_t _isIrms = 0;
+		uint8_t _measuramentStatus = NO_MEASURE;
 		WaveformSample *_myWaveformPtr;
 
+		int8_t _temperature = -127;
 		// SPI default frequency
 		int _spiFreq = DEF_SPI_FREQ;
 
