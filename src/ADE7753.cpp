@@ -657,6 +657,9 @@ void ADE7753::setInterrupt(uint16_t reg) {
     PNEG_BIT	    (0x01 << 14)
     */
 
+    // Discard previous ISRs
+    getResetStatus();
+
     // Write the Interrupt Enable Register
     _internalInterruptRegister |= reg;
     write16(IRQEN, _internalInterruptRegister);
