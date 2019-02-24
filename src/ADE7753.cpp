@@ -816,7 +816,7 @@ uint32_t *ADE7753::getWaveformDataPtr() {
 
 uint16_t ADE7753::getWaveformDataTotalSamples() {
     if (_myWaveformPtr->getDataAvailable()) {
-        return _myWaveformPtr->getTotalSamples();
+        return _myWaveformPtr->getCurrentSample();
     } else {
         return 0;
     }
