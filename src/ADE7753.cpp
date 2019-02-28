@@ -639,24 +639,6 @@ uint32_t ADE7753::getVar(void) { return read24(LVARENERGY); }
 uint32_t ADE7753::getVa(void) { return read24(LVAENERGY); }
 
 void ADE7753::setInterrupt(uint16_t reg) {
-    /* Posible reg value:
-    AEHF_BIT	    (0x01 << 0)
-    SAG_BIT		    (0x01 << 1)
-    CYCEND_BIT	    (0x01 << 2)
-    WSMP_BIT	    (0x01 << 3)
-    ZX_BIT		    (0x01 << 4)
-    TEMPC_BIT	    (0x01 << 5)
-    RESET_BIT	    (0x01 << 6)
-    AEOF_BIT	    (0x01 << 7)
-    PKV_BIT		    (0x01 << 8)
-    PKI_BIT		    (0x01 << 9)
-    VAEHF_BIT	    (0x01 << 10)
-    VAEOF_BIT	    (0x01 << 11)
-    ZXTO_BIT	    (0x01 << 12)
-    PPOS_BIT	    (0x01 << 13)
-    PNEG_BIT	    (0x01 << 14)
-    */
-
     // Discard previous ISRs
     getResetStatus();
 
@@ -666,24 +648,6 @@ void ADE7753::setInterrupt(uint16_t reg) {
 }
 
 void ADE7753::clearInterrupt(uint16_t reg) {
-    /* Posible reg value:
-    AEHF_BIT	    (0x01 << 0)
-    SAG_BIT		    (0x01 << 1)
-    CYCEND_BIT	    (0x01 << 2)
-    WSMP_BIT	    (0x01 << 3)
-    ZX_BIT		    (0x01 << 4)
-    TEMPC_BIT	    (0x01 << 5)
-    RESET_BIT	    (0x01 << 6)
-    AEOF_BIT	    (0x01 << 7)
-    PKV_BIT		    (0x01 << 8)
-    PKI_BIT		    (0x01 << 9)
-    VAEHF_BIT	    (0x01 << 10)
-    VAEOF_BIT	    (0x01 << 11)
-    ZXTO_BIT	    (0x01 << 12)
-    PPOS_BIT	    (0x01 << 13)
-    PNEG_BIT	    (0x01 << 14)
-    */
-
     // Write the Interrupt Enable Register
     _internalInterruptRegister &= ~reg;
     write16(IRQEN, _internalInterruptRegister );
