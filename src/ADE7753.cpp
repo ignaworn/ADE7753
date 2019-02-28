@@ -665,34 +665,38 @@ uint16_t ADE7753::getMaskInterrupt(void) {
 }
 
 esp_err_t ADE7753::startMeasure(uint8_t Parameter) {
-    if (_measuramentStatus != NO_MEASURE){
+    if (_measuramentStatus != NO_MEASURE) {
         return ESP_ERR_INVALID_STATE;
-    }  
+    }
+
+    // TODO: Add security checks to this statement.
+    _measuramentStatus = Parameter;
+
     switch (Parameter) {
         case VOLTAGE:
             _measureCyclesLeft = _cyclesToMeasure;
+            _measAccReg = 0;
             setInterrupt(ZX_BIT);
-             _measuramentStatus = VOLTAGE;
-             _measAccReg = 0;
-             break;
+            break;
         case CURRENT:
             _measureCyclesLeft = _cyclesToMeasure;
+            _measAccReg = 0;
             setInterrupt(ZX_BIT);
-             _measuramentStatus = CURRENT;
-             _measAccReg = 0;
-             break;
+            break;
         case TEMPERATURE:
-            _measuramentStatus = TEMPERATURE;
             setInterrupt(TEMPC_BIT);
             setMode(TEMPSEL_BIT);
             break;
         case WAVEFORM_M:
+            // Check if configWaveform was executed. _myWaveformPtr != NULL
+            if (_myWaveformPtr == NULL) {
+                _measuramentStatus = NO_MEASURE;
+                return ESP_ERR_INVALID_STATE;
+            }
             setInterrupt(WSMP_BIT | ZX_BIT);
-            _measuramentStatus = WAVEFORM_M;
             break;
         case FREQUENCY:
             setInterrupt(ZX_BIT);
-            _measuramentStatus = FREQUENCY;
             break;
     }
     return ESP_OK;
