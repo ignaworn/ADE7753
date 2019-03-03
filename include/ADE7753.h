@@ -254,38 +254,6 @@ class ADE7753 {
 		 */
 		uint8_t getVersion();
 
-
-		/**
-		 * @brief
-		 * 
-		 * @param Bit on Mode register.
-		 * 
-		 * @return 
-		 *     - ESP_OK Success
-		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
-		 */
-		esp_err_t setMode(uint16_t mode);
-
-
-		/**
-		 * @brief
-		 * 
-		 * @param Bit on Mode register.
-		 * 
-		 * @return 
-		 *     - ESP_OK Success
-		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
-		 */
-		esp_err_t clearMode(uint16_t mode);
-
-		/**
-		 * @brief Get MODE register values from ADE7753
-		 * 
-		 * @return data from the register (unsigned 16 bits)
-		 */
-		uint16_t getMode(void);
-
-
 		/**
 		 * @brief Reset ADE7753
 		 * 
@@ -619,6 +587,39 @@ class ADE7753 {
 		gpio_num_t _DIN = DEF_DIN;
 		gpio_num_t _SCLK = DEF_SCLK;
 		gpio_num_t _CS = DEF_CS;
+
+
+		/**
+		 * @brief
+		 * 
+		 * @param Bit on Mode register.
+		 * 
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
+		 */
+		esp_err_t setMode(uint16_t mode);
+
+
+		/**
+		 * @brief
+		 * 
+		 * @param Bit on Mode register.
+		 * 
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_ARG   if parameter is invalid
+		 */
+		esp_err_t clearMode(uint16_t mode);
+
+		/**
+		 * @brief Get MODE register values from ADE7753
+		 * 
+		 * @return data from the register (unsigned 16 bits)
+		 */
+		uint16_t getMode(void);
+
+		
 		/**
 		 * 	Device activity flags
 		 * 
