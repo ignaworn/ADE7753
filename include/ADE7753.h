@@ -287,6 +287,15 @@ class ADE7753 {
 
 
 		/**
+		 * @brief Reset ADE7753
+		 * 
+		 * @return 
+		 *     - ESP_OK Success
+		 *     - ESP_ERR_INVALID_RESPONSE   if no reset was detected
+		 */
+		esp_err_t reset(void);
+
+		/**
 		 * @brief
 		 * 
 		 * @param scale

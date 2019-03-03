@@ -421,6 +421,28 @@ esp_err_t ADE7753::write16(uint8_t reg, uint16_t data) {
 
 uint8_t ADE7753::getVersion(void) { return read8(DIEREV); }
 
+esp_err_t ADE7753::reset(void) {
+
+    // Clear measurement status to ignore IRQ calls
+    _measuramentStatus = NO_MEASURE;
+
+    // Enable reset bit in MODE register
+    setMode(RESET_BIT);
+
+    // Wait at least 18usec
+    // ets_delay_us(18);
+
+    // Refresh the interrupt cache
+    _internalInterruptRegister = getInterrupt();
+
+    // Check and clear reset IRQ
+    if ((getResetStatus() & RESET_BIT) == 0) { 
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+
+    return ESP_OK;
+}
+
 esp_err_t ADE7753::setMode(uint16_t mode) {
     // Check arguments
     if ((mode & WAVSEL_BIT) == WAVESEL_RESERVED) {
